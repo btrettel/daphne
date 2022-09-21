@@ -3,11 +3,9 @@ module daphne
     private
     public wp, dreal, operator(+), operator(-)
     
-#ifndef double_precision
-    integer, parameter :: wp = selected_real_kind(33, 4931)
-#else
+    ! Double precision, but labeled as wp for "working precision" in case I want to change this later.
+    ! Quad precision: integer, parameter :: wp = selected_real_kind(33, 4931)
     integer, parameter :: wp = selected_real_kind(15, 307)
-#endif
     
     type dreal
         real(wp) :: value
