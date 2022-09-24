@@ -1,15 +1,15 @@
 module daphne
     implicit none
     private
-    public wp, dreal, operator(+), operator(-)
+    public wp, preal, operator(+), operator(-), operator(*), operator(/)
     
     ! Double precision, but labeled as wp for "working precision" in case I want to change this later.
     ! Quad precision: integer, parameter :: wp = selected_real_kind(33, 4931)
     integer, parameter :: wp = selected_real_kind(15, 307)
     
-    type dreal
+    type preal
         real(wp) :: value
-    end type dreal
+    end type preal
     
     interface operator (+)
         module procedure dadd
@@ -18,16 +18,36 @@ module daphne
     interface operator (-)
         module procedure dsubtract
     end interface
+    
+    interface operator (*)
+        module procedure dmultiply
+    end interface
+    
+    interface operator (/)
+        module procedure ddivide
+    end interface
 contains
-    function dadd(dreal_1, dreal_2) result (dreal_3)
-        type(dreal), intent(in) :: dreal_1, dreal_2
-        type(dreal) :: dreal_3
-        dreal_3%value = dreal_1%value + dreal_2%value
+    function dadd(preal_1, preal_2) result (preal_3)
+        type(preal), intent(in) :: preal_1, preal_2
+        type(preal) :: preal_3
+        preal_3%value = preal_1%value + preal_2%value
     end function dadd
     
-    function dsubtract(dreal_1, dreal_2) result (dreal_3)
-        type(dreal), intent(in) :: dreal_1, dreal_2
-        type(dreal) :: dreal_3
-        dreal_3%value = dreal_1%value + dreal_2%value
+    function dsubtract(preal_1, preal_2) result (preal_3)
+        type(preal), intent(in) :: preal_1, preal_2
+        type(preal) :: preal_3
+        preal_3%value = preal_1%value - preal_2%value
     end function dsubtract
+    
+    function dmultiply(preal_1, preal_2) result (preal_3)
+        type(preal), intent(in) :: preal_1, preal_2
+        type(preal) :: preal_3
+        preal_3%value = preal_1%value * preal_2%value
+    end function dmultiply
+    
+    function ddivide(preal_1, preal_2) result (preal_3)
+        type(preal), intent(in) :: preal_1, preal_2
+        type(preal) :: preal_3
+        preal_3%value = preal_1%value / preal_2%value
+    end function ddivide
 end module daphne

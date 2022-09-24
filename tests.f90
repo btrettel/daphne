@@ -4,7 +4,7 @@ program tests
     use stdlib
     implicit none
     
-    type(dreal) :: x, y
+    type(preal) :: x, y
     
     x%value = 1._wp / 7._wp
     y%value = 6._wp / 7._wp
