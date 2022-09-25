@@ -1,53 +1,85 @@
+! daphne.f90
+! ==========
+! 
+! Daphne is (will be) a Fortran library for rigorous data analysis
+! in the physical sciences. Dimensional analysis will prevent many
+! potential bugs, and uncertainty propagation will reveal the limits
+! of what can be understood from the data. Daphne prioritizes
+! correctness over speed, so this library is not intended for HPC.
+! 
+! To use Daphne, create a variable of type `preal`:
+! 
+!     type(preal) :: x
+! 
+! Then initialize the variable with dimensions (uncertainties are on the TODO list):
+! 
+!     x = 
+! 
 module daphne
     implicit none
     private
-    public wp, preal, operator(+), operator(-), operator(*), operator(/)
+    public wp
+    public preal
+    public operator(+)
+    public operator(-)
+    public operator(*)
+    public operator(/)
     
-    ! Double precision, but labeled as wp for "working precision" in case I want to change this later.
-    ! Quad precision: integer, parameter :: wp = selected_real_kind(33, 4931)
+    ! `wp` stands for "working precision" in case I want to change the
+    ! precision later. This is double precision for now.
+    ! Quad precision: selected_real_kind(33, 4931)
     integer, parameter :: wp = selected_real_kind(15, 307)
     
     type preal
         real(wp) :: value
     end type preal
     
-    interface operator (+)
-        module procedure dadd
+    interface operator (+) !
+        ! Overload the + operator so that it works for preals.
+        module procedure padd
     end interface
     
-    interface operator (-)
-        module procedure dsubtract
+    interface operator (-) !
+        ! Overload the - operator so that it works for preals.
+        module procedure psubtract
     end interface
     
-    interface operator (*)
-        module procedure dmultiply
+    interface operator (*) !
+        ! Overload the * operator so that it works for preals.
+        module procedure pmultiply
     end interface
     
-    interface operator (/)
-        module procedure ddivide
+    interface operator (/) !
+        ! Overload the / operator so that it works for preals.
+        module procedure pdivide
     end interface
 contains
-    function dadd(preal_1, preal_2) result (preal_3)
+    function padd(preal_1, preal_2) result (preal_3) !
+        ! Adds two preals, checking the dimensions in the process.
         type(preal), intent(in) :: preal_1, preal_2
         type(preal) :: preal_3
         preal_3%value = preal_1%value + preal_2%value
-    end function dadd
+    end function padd
     
-    function dsubtract(preal_1, preal_2) result (preal_3)
+    function psubtract(preal_1, preal_2) result (preal_3) !
+        ! Subtracts two preals, checking the dimensions in the process.
         type(preal), intent(in) :: preal_1, preal_2
         type(preal) :: preal_3
         preal_3%value = preal_1%value - preal_2%value
-    end function dsubtract
+    end function psubtract
     
-    function dmultiply(preal_1, preal_2) result (preal_3)
+    function pmultiply(preal_1, preal_2) result (preal_3) !
+        ! Multiplies two preals, checking the dimensions in the
+        ! process.
         type(preal), intent(in) :: preal_1, preal_2
         type(preal) :: preal_3
         preal_3%value = preal_1%value * preal_2%value
-    end function dmultiply
+    end function pmultiply
     
-    function ddivide(preal_1, preal_2) result (preal_3)
+    function pdivide(preal_1, preal_2) result (preal_3) !
+        ! Divides two preals, checking the dimensions in the process.
         type(preal), intent(in) :: preal_1, preal_2
         type(preal) :: preal_3
         preal_3%value = preal_1%value / preal_2%value
-    end function ddivide
+    end function pdivide
 end module daphne

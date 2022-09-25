@@ -4,15 +4,17 @@
 .DELETE_ON_ERROR:
 
 # TODO: Convert source to C or C++ and compile that way as a portability test. Try multiple converters if possible.
-# TODO: Add depreciated and obsoleted things in book appendix to linter
 # TODO: https://github.com/llvm/llvm-project/tree/main/flang/#building-flang-standalone
+# TODO: Try compiling with the Fortran Standard Library instead of your own nonstdlib.f90.
 
-FC      := gfortran
-FFLAGS  := -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f95 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-72
-OBIN    := tests
-OFLAG   := -o $(OBIN)
-ORUN    := ./$(OBIN)
-SOURCES := daphne.f90 stdlib.f90 tests.f90
+FC       := gfortran
+FFLAGS   := -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f95 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-72
+OBIN     := tests
+OFLAG    := -o $(OBIN)
+ORUN     := ./$(OBIN)
+SRC      := $(shell find ./ -maxdepth 1 -type f -name "*.f90")
+SPAG_SRC := $(patsubst %.f90, tmp/%.f90,$(SRC))
+SPAG_SMB := $(patsubst %.f90, SPAGged/%.smb,$(SRC))
 
 .PHONY: check
 check: tests ## Compile Daphne and run tests
@@ -29,26 +31,39 @@ checkport: ## Run tests in many compilers
 	make clean
 	make check FC=flang-7 FFLAGS='-g -Wdeprecated'
 	make clean
-	make check FC=f90 FFLAGS='-g -w4 -errwarn=%all -e -fnonstd -stackvar -ansi -C -fpover -xcheck=%all'
+	make check FC=f90 FFLAGS='-g -w4 -errwarn=%all -e -fnonstd -stackvar -ansi -C -fpover -xcheck=%all -U'
 	make clean
 	make check FC='wine ~/.wine/drive_c/MSDEV/BIN/FL32.EXE' FFLAGS='/4L72 /4Yb /4Yd /WX /4Yf /4Ys' OBIN='tests.exe' OFLAG='/Fetests.exe' ORUN='wine tests.exe'
 	make clean
 
 .PHONY: clean
 clean: ## Remove compiled binaries and debugging files
-	rm -fv tests *.gcda *.gcno *.cmdx *.cmod *.ilm *.stb *.dbg *.o *.mod *.exe *.obj *.fpl
+	rm -rfv tests *.gcda *.gcno *.cmdx *.cmod *.ilm *.stb *.dbg *.o *.mod *.exe *.obj *.fpl *.FPT SPAGged/ *.log tmp/ _gxchk.htm *.out _pf_data/
 
 # This needs to be run on Ben Trettel's computer as I am using a custom YAML file for CERFACS flint and wrote a wrapper script to interpret the XML output by i-Code CNES.
-lint: $(SOURCES) ## Run linters on Daphne
-	flint lint --flintrc /home/ben/.local/share/flint/fortran.yaml $(SOURCES)
-	-icode-wrapper.py $(SOURCES)
+lint: $(SRC) $(SPAG_SMB) ## Run linters on Daphne
+	-icode-wrapper.py $(SRC)
+	fpt $(SRC)
+
+# Add 6 spaces to the start of every line so that spag can understand the file.
+# Also, run CERFACS flint here as it needs to be run on only one file.
+tmp/%.f90: %.f90
+	flint lint --flintrc /home/ben/.local/share/flint/fortran.yaml $<
+	@mkdir -p $(@D)
+	sed 's/^/      /' $< > $@
+
+$(SPAG_SMB): $(SPAG_SRC)
+	-spag $(SPAG_SRC) fig=tof90.fig > /dev/null
+	gxchk SPAGged/*.smb > /dev/null
+	lynx --nolist --dump _pf_data/ERRORSUM.htm
+	lynx --nolist --dump _pf_data/INFWNERR.htm
 
 .PHONY: stats
 stats: ## Get some statistics for Daphne
-	cloc $(SOURCES) --by-percent c
+	cloc $(SRC) --by-percent c
 
-tests: $(SOURCES)
-	$(FC) $(OFLAG) $(FFLAGS) $(SOURCES)
+tests: $(SRC)
+	$(FC) $(OFLAG) $(FFLAGS) $(SRC)
 
 # <https://www.thapaliya.com/en/writings/well-documented-makefiles/>
 # This should not be the first target. Place at the end.

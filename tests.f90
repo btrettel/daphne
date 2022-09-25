@@ -1,7 +1,12 @@
-! Tests for Daphne
+! tests.f90
+! =========
+! 
+! These are tests for all procedures in Daphne. No testing framework is
+! used to minimize external dependencies.
+! 
 program tests
     use daphne
-    use stdlib
+    use nonstdlib
     implicit none
     
     type(preal) :: x, y
