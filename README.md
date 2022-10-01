@@ -6,8 +6,19 @@ Daphne is (will be) a Fortran library for rigorous data analysis in the physical
 
 Initial goal:
 
+- Code header:
+    - Outline the code with a numbered table of contents, using the same numbers later in the code in each section.
+    - Data dictionary: list variable names, descriptions, and physical units in header.
+- Create stdlib-like is_close_wp function? <https://stdlib.fortran-lang.org/page/specs/stdlib_math.html#is_close-function>
+- Set up test framework.
+    - <https://www.cs.princeton.edu/~bwk/testing.html>
 - Dimensional homogeneity enforced for length, mass, and time.
 - First-order uncertainty propagation for uncorrelated variables.
+
+Later:
+
+- Regression considering uncertainties for uncorrelated variables.
+- Add correlation for uncertainty propagation and regression.
 
 ## Philosophy
 
@@ -21,15 +32,10 @@ Another significant advantage of Fortran is stability. When coding with Python, 
 
 Consequently, I am avoiding languages with relatively rapid changes like Python. I am also avoiding external dependencies, instead preferring my own implementation whenever possible. Implementing everything on my own also has the advantage of improving my understanding of how various planned components of Daphne work.
 
-There is one simple test for longevity: Can the code be run unmodified on an old compiler? If so, then the APIs and dependencies are stable over a long time frame. I test this by compiling Daphne on Microsoft Fortran PowerStation 4.0 from 1995. If Daphne compiles and runs using both an up-to-date compiler and a 20-30 year old compiler, then it probably will still compile and run in 20-30 years.
-
 Initially, I thought that static typing would mean that I'd get a compile-time check on the dimensions. My planned implementation using operator overloading wouldn't provide that, actually. [There is a Fortran implementation of dimensional analysis providing compile-time checks](https://gitlab.com/everythingfunctional/quaff), but the process is much more complex than I'd prefer. Since speed isn't a factor here, I'm okay with a run-time check.
 
 ## Portability notes
 
-Portability is a major concern of mine when writing Daphne. One goal is for Daphne to still be usable in 30 years. I can not predict which compilers will be supported then, so regularly compiler on multiple compilers to identify code that is not portable.
+Portability is a major concern of mine when writing Daphne. One goal is for Daphne to still be usable in 30 years. I can not predict which compilers will be supported then, so regularly compiler on multiple compilers to identify code that is not portable. I am writing to the Fortran 2003 standard, but coverage of even Fortran 2003 standards can be spotty as of 2022.
 
-Daphne is written in Fortran 95 for portability as some Fortran compilers implement few features from Fortran 2003 or later. Targeting Fortran 95 unfortunately leads to some portability concerns in itself:
-
-- The way nonstdlib.f90 writes to stderr is conventional but not standard and may not be fully portable, as [a standard way to write to stderr was not available until Fortran 2003](https://stackoverflow.com/a/8508757/1124489). The value of `error_unit` in nonstdlib.f90 may need to change depending on the compiler. The following compilers do not appear to write to stderr based on the default value of `error_unit` (0) in nonstdlib.f90:
-    - Microsoft Fortran PowerStation 4.0 (The documentation does not mention any way to write to stderr, so this compiler may not be able to.)
+- The way nonstdlib.f90 writes to stderr is conventional but not standard and may not be fully portable, as [a standard way to write to stderr was not available until Fortran 2003](https://stackoverflow.com/a/8508757/1124489), but the Oracle Fortran compiler does not implement this part of the standard. The value of `error_unit` in nonstdlib.f90 may need to change depending on the compiler.

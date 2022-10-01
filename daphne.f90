@@ -1,42 +1,114 @@
-! daphne.f90
-! ==========
+! daphne.f90 - module for uncertain dimensioned variables
+! =======================================================
 ! 
-! Daphne is (will be) a Fortran library for rigorous data analysis
-! in the physical sciences. Dimensional analysis will prevent many
-! potential bugs, and uncertainty propagation will reveal the limits
-! of what can be understood from the data. Daphne prioritizes
-! correctness over speed, so this library is not intended for HPC.
-! 
-! To use Daphne, create a variable of type `preal`:
-! 
-!     type(preal) :: x
-! 
-! Then initialize the variable with dimensions (uncertainties are on the TODO list):
-! 
-!     x = 
-! 
+! Author: Ben Trettel (<http://trettel.us/>)
+! Last updated: 2022-09-28
+! Project: [Daphne](https://github.com/btrettel/daphne)
+! License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
+
 module daphne
+    ! Summary
+    ! -------
+    ! 
+    ! Daphne is a Fortran library for rigorous data analysis in the
+    ! physical sciences. Dimensional analysis will prevent many
+    ! potential bugs, and uncertainty propagation will reveal the
+    ! limits of what can be understood from the data. Daphne
+    ! prioritizes correctness over speed, so this library is not
+    ! intended for HPC.
+    ! 
+    ! To use Daphne, create a variable of type `preal`:
+    ! 
+    !     type(preal) :: x
+    ! 
+    ! Then initialize the variable with dimensions and
+    ! uncertainties. For example, to initialize a normally
+    ! distributed variable:
+    ! 
+    !     x = N(1.5_wp, 0.1_wp)
+    ! 
+    ! Table of contents
+    ! -----------------
+    ! 
+    ! 1. Declare parameters
+    ! 2. Declare variables
+    ! 3. Initialize variables
+    ! 4. Declare operators
+    ! 6. Testing procedures
+    ! 7. Constructors
+    ! 8. Operator functions
+    ! 8a. preal scalars
+    ! 8b. preal arrays
+    
+    use nonstdlib
     implicit none
     private
     public wp
     public preal
+    public N
     public operator(+)
     public operator(-)
     public operator(*)
     public operator(/)
     
-    ! `wp` stands for "working precision" in case I want to change the
-    ! precision later. This is double precision for now.
+    ! 1. Declare parameters
+    ! ---------------------
+    
+    ! `wp` stands for "working precision" in case I want to change
+    ! the precision later. This is double precision for now.
     ! Quad precision: selected_real_kind(33, 4931)
     integer, parameter :: wp = selected_real_kind(15, 307)
     
+    ! Kind number for integer used to count preals.
+    !integer, parameter :: intk = selected_int_kind(4)
+    
+    ! 2. Declare variables
+    ! --------------------
+    
+    ! number of preals, used as the dimension of the covariance matrix
+    !integer(kind=intk) :: number_of_preals = 0
+    
+    ! covariance matrix
+    ! real(kind=wp), allocatable, dimension(:,:) :: covariance
+    
+    ! 3. Declare preal type
+    ! ---------------------
+    
     type preal
-        real(wp) :: value
+        ! The preal_id is the index of this variable in the covariance
+        ! matrix.
+        !integer(kind=intk) :: preal_id
+        
+        real(kind=wp) :: mean
+        real(kind=wp) :: stdev
+        
+        ! Why have logical variables for whether the `lower_bound`
+        ! and `upper_bound` are set if `lower_bound` is set to
+        ! `-huge(1._wp)` when `lower_bound_set == .false.` and
+        ! `upper_bound` is set to `huge(1._wp)` when
+        ! `upper_bound_set == .false.`? That is, if the bound
+        ! variables are set to the limits of the real type anyway,
+        ! why not simply check against those bounds anyway? The
+        ! bounds aren't simply checked against; they are
+        ! *propagated*. For example, if `x%lower_bound = -1._wp`, and
+        ! `y = 2._wp * x`, then `y%lower_bound = -2._wp`. The interval
+        ! arithmetic should be disabled when it is not needed.
+!        logical :: lower_bound_set
+!        real(kind=wp) :: lower_bound
+!        logical :: upper_bound_set
+!        real(kind=wp) :: upper_bound
     end type preal
+    
+    ! 4. Declare operators
+    ! --------------------
+    
+    ! TODO: Declare assignment operator to check if bounds of preal
+    ! to be assigned to are different than the bounds of the preal
+    ! being assigned from. Pick the more restrictive bounds.
     
     interface operator (+) !
         ! Overload the + operator so that it works for preals.
-        module procedure padd
+        module procedure padd, padd_array
     end interface
     
     interface operator (-) !
@@ -54,32 +126,161 @@ module daphne
         module procedure pdivide
     end interface
 contains
-    function padd(preal_1, preal_2) result (preal_3) !
-        ! Adds two preals, checking the dimensions in the process.
+    ! 6. Testing procedures
+    ! ---------------------
+    
+    subroutine validate_preal(preal_in) !
+        ! Check that a preal is plausible.
+        
+        type(preal), intent(in) :: preal_in
+        
+!        call check(preal_in%preal_id > 0_intk, &
+!            "preal_id not greater than zero.")
+        
+!        call check(preal_in%preal_id <= number_of_preals, &
+!            "preal_id not less than or equal to the number of preals.")
+        
+        call check(preal_in%stdev > 0._wp, &
+            "Standard deviation not greater than zero.")
+        
+!        if (preal_in%lower_bound_set) then
+!            call check(preal_in%mean >= preal_in%lower_bound, &
+!                "Mean not greater than lower bound.")
+!        end if
+        
+!        if (preal_in%upper_bound_set) then
+!            call check(preal_in%mean <= preal_in%upper_bound, &
+!                "Mean not less than upper bound.")
+!        end if
+    end subroutine validate_preal
+    
+    subroutine validate_preal_array(preal_array_in) !
+        ! Check that a preal array is plausible.
+        
+        type(preal), dimension(:), intent(in) :: preal_array_in
+        integer :: i
+        
+        do i = lbound(preal_array_in, dim=1), &
+                ubound(preal_array_in, dim=1)
+            call validate_preal(preal_array_in(i))
+        end do
+    end subroutine validate_preal_array
+    
+    ! 7. Constructors
+    ! ---------------
+    
+    function N(mean, stdev) result(preal_out) !
+        ! Returns a normally distributed preal.
+        
+        real(kind=wp), intent(in) :: mean, stdev
+!        real(kind=wp), intent(in), optional :: lower_bound
+        type(preal) :: preal_out
+        
+        !number_of_preals   = number_of_preals + 1_intk
+        !preal_out%preal_id = number_of_preals
+        preal_out%mean     = mean
+        preal_out%stdev    = stdev
+        
+!        if (present(lower_bound)) then
+!            preal_out%lower_bound_set = .true.
+!            preal_out%lower_bound = lower_bound
+!        else
+!            preal_out%lower_bound_set = .false.
+!            !preal_out%lower_bound = -huge(1._wp)
+!        end if
+        
+        call validate_preal(preal_out)
+    end function N
+    
+    ! 8. Operator functions
+    ! ---------------------
+    
+    ! 8a. preal scalars
+    ! -----------------
+    
+    function padd(preal_1, preal_2) result(preal_out) !
+        ! Adds two preal scalars.
+        
         type(preal), intent(in) :: preal_1, preal_2
-        type(preal) :: preal_3
-        preal_3%value = preal_1%value + preal_2%value
+        type(preal) :: preal_out
+        
+        preal_out%mean = preal_1%mean + preal_2%mean
+        preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
+        
+        call validate_preal(preal_out)
     end function padd
     
-    function psubtract(preal_1, preal_2) result (preal_3) !
-        ! Subtracts two preals, checking the dimensions in the process.
+    function psubtract(preal_1, preal_2) result(preal_out) !
+        ! Subtracts two preal scalars.
+        
         type(preal), intent(in) :: preal_1, preal_2
-        type(preal) :: preal_3
-        preal_3%value = preal_1%value - preal_2%value
+        type(preal) :: preal_out
+        
+        preal_out%mean = preal_1%mean - preal_2%mean
+        preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
+        
+        call validate_preal(preal_out)
     end function psubtract
     
-    function pmultiply(preal_1, preal_2) result (preal_3) !
-        ! Multiplies two preals, checking the dimensions in the
-        ! process.
+    function pmultiply(preal_1, preal_2) result(preal_out) !
+        ! Multiplies two preal scalars.
+        
         type(preal), intent(in) :: preal_1, preal_2
-        type(preal) :: preal_3
-        preal_3%value = preal_1%value * preal_2%value
+        type(preal) :: preal_out
+        
+        preal_out%mean = preal_1%mean * preal_2%mean
+        preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
+        
+        call validate_preal(preal_out)
     end function pmultiply
     
-    function pdivide(preal_1, preal_2) result (preal_3) !
-        ! Divides two preals, checking the dimensions in the process.
+    function pdivide(preal_1, preal_2) result(preal_out) !
+        ! Divides two preal scalars.
+        
         type(preal), intent(in) :: preal_1, preal_2
-        type(preal) :: preal_3
-        preal_3%value = preal_1%value / preal_2%value
+        type(preal) :: preal_out
+        
+        preal_out%mean = preal_1%mean / preal_2%mean
+        preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
+        
+        call validate_preal(preal_out)
     end function pdivide
+    
+    ! 8b. preal arrays
+    ! ----------------
+    
+    function padd_array(preal_array_1, preal_array_2) &
+            result(preal_array_out) !
+        ! Adds two preal arrays.
+        
+        type(preal), dimension(:), intent(in) :: preal_array_1
+        type(preal), dimension(:), intent(in) :: preal_array_2
+        type(preal), allocatable, dimension(:) :: preal_array_out
+        integer :: i, lower_index, upper_index
+        
+        ! Check that preal_array_1 and preal_array_1 have the same
+        ! dimensions.
+        call check(lbound(preal_array_1, dim=1) == &
+                    lbound(preal_array_2, dim=1))
+        call check(ubound(preal_array_1, dim=1) == &
+                    ubound(preal_array_2, dim=1))
+        
+        ! Allocate the output array.
+        
+        lower_index = lbound(preal_array_1, dim=1)
+        upper_index = ubound(preal_array_1, dim=1)
+        
+        allocate(preal_array_out(lower_index:upper_index), stat=i)
+        if (i > 0) then
+            call error_stop("Output array not allocated in &
+                        &operation on preal array.")
+        end if
+        
+        do i = lower_index, upper_index
+            print *, 6, i
+            preal_array_out(i) = preal_array_1(i) + preal_array_2(i)
+        end do
+        
+        call validate_preal_array(preal_array_out)
+    end function padd_array
 end module daphne
