@@ -123,17 +123,17 @@ module daphne
     
     interface operator (-) !
         ! Overload the - operator so that it works for preals.
-        module procedure psubtract
+        module procedure psubtract, psubtract_array
     end interface
     
     interface operator (*) !
         ! Overload the * operator so that it works for preals.
-        module procedure pmultiply
+        module procedure pmultiply, pmultiply_array
     end interface
     
     interface operator (/) !
         ! Overload the / operator so that it works for preals.
-        module procedure pdivide
+        module procedure pdivide, pdivide_array
     end interface
 contains
     ! 6. Testing procedures
@@ -190,7 +190,12 @@ contains
         if (present(eps)) then
             eps_set = eps
         else
+            ! The first determines a *relative* range. The second
+            ! takes the largest of the relative range and an absolute
+            ! range, in case input_real_1 is small.
             eps_set = abs(input_real_1 * &
+                        10._wp**(-(real(prec, kind=wp) - 2._wp)))
+            eps_set = max(eps_set, &
                         10._wp**(-(real(prec, kind=wp) - 2._wp)))
         end if
         
@@ -377,4 +382,106 @@ contains
         
         call validate_preal_array(preal_array_out)
     end function padd_array
+    
+    function psubtract_array(preal_array_1, preal_array_2) &
+            result(preal_array_out) !
+        ! Subtracts two preal arrays.
+        
+        type(preal), dimension(:), intent(in) :: preal_array_1
+        type(preal), dimension(:), intent(in) :: preal_array_2
+        type(preal), allocatable, dimension(:) :: preal_array_out
+        integer :: i, lower_index, upper_index
+        
+        ! Check that preal_array_1 and preal_array_1 have the same
+        ! dimensions.
+        call check(lbound(preal_array_1, dim=1) == &
+                    lbound(preal_array_2, dim=1))
+        call check(ubound(preal_array_1, dim=1) == &
+                    ubound(preal_array_2, dim=1))
+        
+        ! Allocate the output array.
+        
+        lower_index = lbound(preal_array_1, dim=1)
+        upper_index = ubound(preal_array_1, dim=1)
+        
+        allocate(preal_array_out(lower_index:upper_index), stat=i)
+        if (i > 0) then
+            call error_stop("Output array not allocated in &
+                        &operation on preal array.")
+        end if
+        
+        do i = lower_index, upper_index
+            preal_array_out(i) = preal_array_1(i) - preal_array_2(i)
+        end do
+        
+        call validate_preal_array(preal_array_out)
+    end function psubtract_array
+    
+    function pmultiply_array(preal_array_1, preal_array_2) &
+            result(preal_array_out) !
+        ! Multiplies two preal arrays.
+        
+        type(preal), dimension(:), intent(in) :: preal_array_1
+        type(preal), dimension(:), intent(in) :: preal_array_2
+        type(preal), allocatable, dimension(:) :: preal_array_out
+        integer :: i, lower_index, upper_index
+        
+        ! Check that preal_array_1 and preal_array_1 have the same
+        ! dimensions.
+        call check(lbound(preal_array_1, dim=1) == &
+                    lbound(preal_array_2, dim=1))
+        call check(ubound(preal_array_1, dim=1) == &
+                    ubound(preal_array_2, dim=1))
+        
+        ! Allocate the output array.
+        
+        lower_index = lbound(preal_array_1, dim=1)
+        upper_index = ubound(preal_array_1, dim=1)
+        
+        allocate(preal_array_out(lower_index:upper_index), stat=i)
+        if (i > 0) then
+            call error_stop("Output array not allocated in &
+                        &operation on preal array.")
+        end if
+        
+        do i = lower_index, upper_index
+            preal_array_out(i) = preal_array_1(i) * preal_array_2(i)
+        end do
+        
+        call validate_preal_array(preal_array_out)
+    end function pmultiply_array
+    
+    function pdivide_array(preal_array_1, preal_array_2) &
+            result(preal_array_out) !
+        ! Divides two preal arrays.
+        
+        type(preal), dimension(:), intent(in) :: preal_array_1
+        type(preal), dimension(:), intent(in) :: preal_array_2
+        type(preal), allocatable, dimension(:) :: preal_array_out
+        integer :: i, lower_index, upper_index
+        
+        ! Check that preal_array_1 and preal_array_1 have the same
+        ! dimensions.
+        call check(lbound(preal_array_1, dim=1) == &
+                    lbound(preal_array_2, dim=1))
+        call check(ubound(preal_array_1, dim=1) == &
+                    ubound(preal_array_2, dim=1))
+        
+        ! Allocate the output array.
+        
+        lower_index = lbound(preal_array_1, dim=1)
+        upper_index = ubound(preal_array_1, dim=1)
+        
+        allocate(preal_array_out(lower_index:upper_index), stat=i)
+        if (i > 0) then
+            call error_stop("Output array not allocated in &
+                        &operation on preal array.")
+        end if
+        
+        do i = lower_index, upper_index
+            preal_array_out(i) = preal_array_1(i) / preal_array_2(i)
+        end do
+        
+        call validate_preal_array(preal_array_out)
+    end function pdivide_array
 end module daphne

@@ -43,13 +43,13 @@ contains
         logical, intent(in) :: condition
         character(len=*), intent(in), optional :: msg
         
-        if (.not. condition) then
-            if (present(msg)) then
+        outer: if (.not. condition) then
+            inner: if (present(msg)) then
                 call error_stop(msg)
             else
                 call error_stop("Check failed.")
-            end if
-        end if
+            end if inner
+        end if outer
     end subroutine check
     
     subroutine error_stop(msg) !

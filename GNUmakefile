@@ -40,7 +40,7 @@ clean: ## Remove compiled binaries and debugging files
 
 # This needs to be run on Ben Trettel's computer as I am using a custom YAML file for CERFACS flint and wrote a wrapper script to interpret the XML output by i-Code CNES.
 lint: clean $(SRC) ## Run linters on Daphne
-	$(foreach source_file,$(SRC),flint lint --flintrc /home/ben/.local/share/flint/fortran.yaml $(source_file);)
+	$(foreach source_file,$(SRC),echo ; echo $(source_file):; flint lint --flintrc /home/ben/.local/share/flint/fortran.yaml $(source_file);)
 	-icode-wrapper.py $(SRC)
 	fpt $(SRC)
 
