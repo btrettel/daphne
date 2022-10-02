@@ -52,7 +52,9 @@ module daphne
     public preal
     public integer_to_string
     public is_close_wp
-    public test_result
+    public logical_test
+    public real_comparison_test
+    public tests_end
     public N
     public operator(+)
     public operator(-)
@@ -201,9 +203,9 @@ contains
         end if
     end function is_close_wp
     
-    subroutine test_result(condition, msg, number_of_failures) !
+    subroutine logical_test(condition, msg, number_of_failures) !
         ! Check whether test condition is true, increase
-        ! number_of_failures if not true.
+        ! number_of_failures if false.
         
         logical, intent(in) :: condition
         character(len=*), intent(in) :: msg
@@ -215,7 +217,35 @@ contains
             write(error_unit, *) "fail: "//msg
             number_of_failures = number_of_failures + 1
         end if
-    end subroutine test_result
+        print *
+    end subroutine logical_test
+    
+    subroutine real_comparison_test(program_real, expected_real, &
+                msg, number_of_failures) !
+        ! Check whether two reals are close, increase
+        ! number_of_failures if false.
+        
+        real(kind=wp), intent(in) :: program_real, expected_real
+        character(len=*), intent(in) :: msg
+        integer, intent(inout) :: number_of_failures
+        
+        print *, "returned: ", program_real
+        print *, "expected: ", expected_real
+        call logical_test(is_close_wp(program_real, expected_real), &
+            msg, &
+            number_of_failures)
+    end subroutine real_comparison_test
+    
+    subroutine tests_end(number_of_failures) !
+        integer, intent(in) :: number_of_failures
+        
+        if (number_of_failures > 0) then
+            call error_stop(integer_to_string(number_of_failures)//&
+                            " test failures.")
+        else
+            print *, "All tests passed."
+        end if
+    end subroutine tests_end
     
     ! 7. Convenience procedures
     ! -------------------------

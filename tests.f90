@@ -51,19 +51,19 @@ program tests
     ! TODO: validate_preal
     ! TODO: validate_preal_array
     
-    call test_result(is_close_wp(1._wp, 1._wp), &
+    call logical_test(is_close_wp(1._wp, 1._wp), &
         "is_close_wp, identical numbers", &
         number_of_failures)
     
-    call test_result(.not. is_close_wp(1._wp, 10._wp), &
+    call logical_test(.not. is_close_wp(1._wp, 10._wp), &
         "is_close_wp, different numbers", &
         number_of_failures)
     
-    call test_result(is_close_wp(1._wp, 1.05_wp, eps=0.1_wp), &
+    call logical_test(is_close_wp(1._wp, 1.05_wp, eps=0.1_wp), &
         "is_close_wp, close numbers with set eps, inside eps", &
         number_of_failures)
     
-    call test_result(.not. is_close_wp(1._wp, 1.15_wp, eps=0.1_wp), &
+    call logical_test(.not. is_close_wp(1._wp, 1.15_wp, eps=0.1_wp), &
         "is_close_wp, close numbers with set eps, outside eps", &
         number_of_failures)
 
@@ -72,11 +72,11 @@ program tests
     
     x = N(1._wp / 7._wp, 2._wp / 7._wp)
     
-    call test_result(is_close_wp(x%mean, 1._wp / 7._wp), &
+    call real_comparison_test(x%mean, 1._wp / 7._wp, &
         "preal scalar constructor, whether mean is set properly", &
         number_of_failures)
     
-    call test_result(is_close_wp(x%stdev, 2._wp / 7._wp), &
+    call real_comparison_test(x%stdev, 2._wp / 7._wp, &
         "preal scalar constructor, whether stdev is set properly", &
         number_of_failures)
     
@@ -98,14 +98,14 @@ program tests
     ! Addition
     
     z = x + y
-    call test_result(is_close_wp(z%mean, 1._wp), &
+    call real_comparison_test(z%mean, 1._wp, &
         "preal scalar addition, mean check", &
         number_of_failures)
     
     ! subtraction
     
     z = x - y
-    call test_result(is_close_wp(z%mean, -5._wp / 7._wp), &
+    call real_comparison_test(z%mean, -5._wp / 7._wp, &
         "preal scalar subtraction, mean check", &
         number_of_failures)
     
@@ -124,10 +124,5 @@ program tests
     ! 5. Final result
     ! ---------------
     
-    if (number_of_failures > 0) then
-        call error_stop(integer_to_string(number_of_failures)//&
-                        " test failures.")
-    else
-        print *, "All tests passed."
-    end if
+    call tests_end(number_of_failures)
 end program tests
