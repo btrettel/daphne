@@ -19,7 +19,9 @@ module nonstdlib
     ! Table of contents
     ! -----------------
     ! 
-    ! TODO
+    ! 1. Set modules and other boilerplate
+    ! 2. Declare parameters
+    ! 3. Declare procedures
     
     implicit none
     private

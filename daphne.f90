@@ -30,28 +30,36 @@ module daphne
     ! Table of contents
     ! -----------------
     ! 
-    ! 1. Declare parameters
-    ! 2. Declare variables
-    ! 3. Initialize variables
-    ! 4. Declare operators
+    ! 1. Set modules and other boilerplate
+    ! 2. Declare parameters
+    ! 3. Declare variables
+    ! 4. Initialize variables
+    ! 5. Declare operators
     ! 6. Testing procedures
-    ! 7. Constructors
-    ! 8. Operator functions
-    ! 8a. preal scalars
-    ! 8b. preal arrays
+    ! 7. Convenience procedures
+    ! 8. Constructors
+    ! 9. Operator functions
+    ! 9a. preal scalars
+    ! 9b. preal arrays
+    
+    ! 1. Set modules and other boilerplate
+    ! ------------------------------------
     
     use nonstdlib
     implicit none
     private
     public wp
     public preal
+    public integer_to_string
+    public is_close_wp
+    public test_result
     public N
     public operator(+)
     public operator(-)
     public operator(*)
     public operator(/)
     
-    ! 1. Declare parameters
+    ! 2. Declare parameters
     ! ---------------------
     
     ! `wp` stands for "working precision" in case I want to change
@@ -62,7 +70,7 @@ module daphne
     ! Kind number for integer used to count preals.
     !integer, parameter :: intk = selected_int_kind(4)
     
-    ! 2. Declare variables
+    ! 3. Declare variables
     ! --------------------
     
     ! number of preals, used as the dimension of the covariance matrix
@@ -71,7 +79,7 @@ module daphne
     ! covariance matrix
     ! real(kind=wp), allocatable, dimension(:,:) :: covariance
     
-    ! 3. Declare preal type
+    ! 4. Declare preal type
     ! ---------------------
     
     type preal
@@ -99,7 +107,7 @@ module daphne
 !        real(kind=wp) :: upper_bound
     end type preal
     
-    ! 4. Declare operators
+    ! 5. Declare operators
     ! --------------------
     
     ! TODO: Declare assignment operator to check if bounds of preal
@@ -166,7 +174,64 @@ contains
         end do
     end subroutine validate_preal_array
     
-    ! 7. Constructors
+    function is_close_wp(input_real_1, input_real_2, eps) !
+        ! Determine whether two reals are close.
+        
+        real(kind=wp), intent(in) :: input_real_1, input_real_2
+        real(kind=wp), intent(in), optional :: eps
+        real(kind=wp) :: eps_set
+        integer :: prec
+        logical :: is_close_wp
+        
+        prec = precision(input_real_1)
+        
+        if (present(eps)) then
+            eps_set = eps
+        else
+            eps_set = abs(input_real_1 * &
+                        10._wp**(-(real(prec, kind=wp) - 2._wp)))
+        end if
+        
+        call check(eps_set > 0._wp)
+        
+        if (abs(input_real_1 - input_real_2) < eps_set) then
+            is_close_wp = .true.
+        else
+            is_close_wp = .false.
+        end if
+    end function is_close_wp
+    
+    subroutine test_result(condition, msg, number_of_failures) !
+        ! Check whether test condition is true, increase
+        ! number_of_failures if not true.
+        
+        logical, intent(in) :: condition
+        character(len=*), intent(in) :: msg
+        integer, intent(inout) :: number_of_failures
+        
+        if (condition) then
+            print *, "pass: "//msg
+        else
+            write(error_unit, *) "fail: "//msg
+            number_of_failures = number_of_failures + 1
+        end if
+    end subroutine test_result
+    
+    ! 7. Convenience procedures
+    ! -------------------------
+    
+    function integer_to_string(i) result(res) !
+        ! Convert an integer to a string.
+        ! <https://stackoverflow.com/a/31028207/1124489>
+        ! Also see: <https://github.com/fortran-lang/stdlib/issues/69>
+        character(:), allocatable :: res
+        integer, intent(in) :: i
+        character(range(i)+2) :: tmp
+        write(tmp, '(i0)') i
+        res = trim(tmp)
+    end function integer_to_string
+    
+    ! 8. Constructors
     ! ---------------
     
     function N(mean, stdev) result(preal_out) !
@@ -192,10 +257,10 @@ contains
         call validate_preal(preal_out)
     end function N
     
-    ! 8. Operator functions
+    ! 9. Operator functions
     ! ---------------------
     
-    ! 8a. preal scalars
+    ! 9a. preal scalars
     ! -----------------
     
     function padd(preal_1, preal_2) result(preal_out) !
@@ -246,7 +311,7 @@ contains
         call validate_preal(preal_out)
     end function pdivide
     
-    ! 8b. preal arrays
+    ! 9b. preal arrays
     ! ----------------
     
     function padd_array(preal_array_1, preal_array_2) &
@@ -277,7 +342,6 @@ contains
         end if
         
         do i = lower_index, upper_index
-            print *, 6, i
             preal_array_out(i) = preal_array_1(i) + preal_array_2(i)
         end do
         
