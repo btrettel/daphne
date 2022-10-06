@@ -1,8 +1,8 @@
-! nonstdlib.f90 - Fortran 95 implementations of Fortran stdlib
+! nonstdlib.f90 - Fortran 90 implementations of Fortran stdlib
 ! ============================================================
 ! 
 ! Author: Ben Trettel (<http://trettel.us/>)
-! Last updated: 2022-09-28
+! Last updated: 2022-10-05
 ! Project: [Daphne](https://github.com/btrettel/daphne)
 ! License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
 
@@ -13,8 +13,8 @@ module nonstdlib
     ! These are independent implementations of some procedures from
     ! the [Fortran stdlib](https://github.com/fortran-lang/stdlib)
     ! to avoid external dependencies (to improve longevity) and work
-    ! in Fortran 2003 (as the Fortran stdlib requires Fortran 2008
-    ! at a mininum).
+    ! in Fortran 90 (as the Fortran stdlib requires Fortran 2008 at a
+    ! mininum).
     ! 
     ! Table of contents
     ! -----------------

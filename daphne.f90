@@ -2,7 +2,7 @@
 ! =======================================================
 ! 
 ! Author: Ben Trettel (<http://trettel.us/>)
-! Last updated: 2022-09-28
+! Last updated: 2022-10-05
 ! Project: [Daphne](https://github.com/btrettel/daphne)
 ! License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
 
@@ -50,7 +50,6 @@ module daphne
     private
     public wp
     public preal
-    public integer_to_string
     public is_close_wp
     public logical_test
     public real_comparison_test
@@ -245,8 +244,8 @@ contains
         integer, intent(in) :: number_of_failures
         
         if (number_of_failures > 0) then
-            call error_stop(integer_to_string(number_of_failures)//&
-                            " test failures.")
+            print *, number_of_failures, "test(s) failed."
+            call error_stop("Exiting with error.")
         else
             print *, "All tests passed."
         end if
@@ -255,16 +254,7 @@ contains
     ! 7. Convenience procedures
     ! -------------------------
     
-    function integer_to_string(i) result(res) !
-        ! Convert an integer to a string.
-        ! <https://stackoverflow.com/a/31028207/1124489>
-        ! Also see: <https://github.com/fortran-lang/stdlib/issues/69>
-        character(:), allocatable :: res
-        integer, intent(in) :: i
-        character(range(i)+2) :: tmp
-        write(tmp, '(i0)') i
-        res = trim(tmp)
-    end function integer_to_string
+    
     
     ! 8. Constructors
     ! ---------------
@@ -355,7 +345,7 @@ contains
         
         type(preal), dimension(:), intent(in) :: preal_array_1
         type(preal), dimension(:), intent(in) :: preal_array_2
-        type(preal), allocatable, dimension(:) :: preal_array_out
+        type(preal), dimension(size(preal_array_1)) :: preal_array_out
         integer :: i, lower_index, upper_index
         
         ! Check that preal_array_1 and preal_array_1 have the same
@@ -369,12 +359,6 @@ contains
         
         lower_index = lbound(preal_array_1, dim=1)
         upper_index = ubound(preal_array_1, dim=1)
-        
-        allocate(preal_array_out(lower_index:upper_index), stat=i)
-        if (i > 0) then
-            call error_stop("Output array not allocated in &
-                        &operation on preal array.")
-        end if
         
         do i = lower_index, upper_index
             preal_array_out(i) = preal_array_1(i) + preal_array_2(i)
@@ -389,7 +373,7 @@ contains
         
         type(preal), dimension(:), intent(in) :: preal_array_1
         type(preal), dimension(:), intent(in) :: preal_array_2
-        type(preal), allocatable, dimension(:) :: preal_array_out
+        type(preal), dimension(size(preal_array_1)) :: preal_array_out
         integer :: i, lower_index, upper_index
         
         ! Check that preal_array_1 and preal_array_1 have the same
@@ -403,12 +387,6 @@ contains
         
         lower_index = lbound(preal_array_1, dim=1)
         upper_index = ubound(preal_array_1, dim=1)
-        
-        allocate(preal_array_out(lower_index:upper_index), stat=i)
-        if (i > 0) then
-            call error_stop("Output array not allocated in &
-                        &operation on preal array.")
-        end if
         
         do i = lower_index, upper_index
             preal_array_out(i) = preal_array_1(i) - preal_array_2(i)
@@ -423,7 +401,7 @@ contains
         
         type(preal), dimension(:), intent(in) :: preal_array_1
         type(preal), dimension(:), intent(in) :: preal_array_2
-        type(preal), allocatable, dimension(:) :: preal_array_out
+        type(preal), dimension(size(preal_array_1)) :: preal_array_out
         integer :: i, lower_index, upper_index
         
         ! Check that preal_array_1 and preal_array_1 have the same
@@ -437,12 +415,6 @@ contains
         
         lower_index = lbound(preal_array_1, dim=1)
         upper_index = ubound(preal_array_1, dim=1)
-        
-        allocate(preal_array_out(lower_index:upper_index), stat=i)
-        if (i > 0) then
-            call error_stop("Output array not allocated in &
-                        &operation on preal array.")
-        end if
         
         do i = lower_index, upper_index
             preal_array_out(i) = preal_array_1(i) * preal_array_2(i)
@@ -457,7 +429,7 @@ contains
         
         type(preal), dimension(:), intent(in) :: preal_array_1
         type(preal), dimension(:), intent(in) :: preal_array_2
-        type(preal), allocatable, dimension(:) :: preal_array_out
+        type(preal), dimension(size(preal_array_1)) :: preal_array_out
         integer :: i, lower_index, upper_index
         
         ! Check that preal_array_1 and preal_array_1 have the same
@@ -471,12 +443,6 @@ contains
         
         lower_index = lbound(preal_array_1, dim=1)
         upper_index = ubound(preal_array_1, dim=1)
-        
-        allocate(preal_array_out(lower_index:upper_index), stat=i)
-        if (i > 0) then
-            call error_stop("Output array not allocated in &
-                        &operation on preal array.")
-        end if
         
         do i = lower_index, upper_index
             preal_array_out(i) = preal_array_1(i) / preal_array_2(i)
