@@ -175,32 +175,41 @@ contains
         end do
     end subroutine validate_preal_array
     
-    function is_close_wp(input_real_1, input_real_2, eps) !
+    function is_close_wp(input_real_1, input_real_2, rel_tol, abs_tol) !
         ! Determine whether two reals are close.
         
         real(kind=wp), intent(in) :: input_real_1, input_real_2
-        real(kind=wp), intent(in), optional :: eps
-        real(kind=wp) :: eps_set
+        real(kind=wp), intent(in), optional :: rel_tol, abs_tol
+        real(kind=wp) :: rel_tol_set, abs_tol_set, tol
         integer :: prec
         logical :: is_close_wp
         
         prec = precision(input_real_1)
         
-        if (present(eps)) then
-            eps_set = eps
+        if (present(rel_tol)) then
+            call check(rel_tol >= 0._wp, &
+                msg="Set relative tolerance not zero or more.")
+            rel_tol_set = rel_tol
         else
-            ! The first determines a *relative* range. The second
-            ! takes the largest of the relative range and an absolute
-            ! range, in case input_real_1 is small.
-            eps_set = abs(input_real_1 * &
-                        10._wp**(-(real(prec, kind=wp) - 2._wp)))
-            eps_set = max(eps_set, &
-                        10._wp**(-(real(prec, kind=wp) - 2._wp)))
+            rel_tol_set = 10._wp**(-(real(prec, kind=wp) - 2._wp))
         end if
         
-        call check(eps_set > 0._wp)
+        if (present(abs_tol)) then
+            call check(abs_tol >= 0._wp, &
+                msg="Set absolute tolerance not zero or more.")
+            abs_tol_set = abs_tol
+        else
+            abs_tol_set = 10._wp**(-(real(prec, kind=wp) - 2._wp))
+        end if
         
-        if (abs(input_real_1 - input_real_2) < eps_set) then
+        tol = max(rel_tol_set * abs(input_real_1), &
+                rel_tol_set * abs(input_real_2), &
+                abs_tol_set)
+        
+        call check(tol > 0._wp, &
+                    msg="Tolerance not greater than zero.")
+        
+        if (abs(input_real_1 - input_real_2) < tol) then
             is_close_wp = .true.
         else
             is_close_wp = .false.

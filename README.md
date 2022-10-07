@@ -6,6 +6,9 @@ Daphne is (will be) a Fortran library for rigorous data analysis in the physical
 
 Initial goal:
 
+- Make array operators work in 2D arrays in the process.
+- Add tests for 2D arrays.
+- Add `all_close_wp` function. <https://stdlib.fortran-lang.org/page/specs/stdlib_math.html#all_close-function>
 - Dimensional homogeneity enforced for length, mass, and time.
 - First-order uncertainty propagation for uncorrelated variables.
 

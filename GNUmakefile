@@ -7,6 +7,8 @@
 # TODO: <https://github.com/llvm/llvm-project/tree/main/flang/#building-flang-standalone>
 # TODO: Try compiling with the Fortran Standard Library instead of your own nonstdlib.f90.
 # TODO: <http://fortranwiki.org/fortran/show/Debugging+tools>
+# TODO: Try AMD's Open64 compiler
+# TODO: MicroWay NDP Fortran 90 for DOS
 
 FC       := gfortran
 FFLAGS   := -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f95 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-72
@@ -20,6 +22,7 @@ SPAG_SMB := $(patsubst %.f90, SPAGged/%.smb,$(SRC))
 .PHONY: check
 check: tests ## Compile Daphne and run tests
 	$(ORUN)
+	@echo Tests on $(FC) ran successfully.
 
 # gfortran, ifort, ifx, flang-7, f90 (Oracle), FL32 (Microsoft Fortran PowerStation 4.0)
 .PHONY: checkport
@@ -36,6 +39,7 @@ checkport: ## Run tests in many compilers
 	make clean
 	make check FC='wine ~/.wine/drive_c/MSDEV/BIN/FL32.EXE' FFLAGS='/4L72 /4Yb /4Yd /WX /4Yf /4Ys' OBIN='tests.exe' OFLAG='/Fetests.exe' ORUN='wine tests.exe'
 	make clean
+	@echo Tests on all compilers ran successfully.
 
 .PHONY: clean
 clean: ## Remove compiled binaries and debugging files

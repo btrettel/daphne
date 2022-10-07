@@ -50,6 +50,7 @@ program tests
     
     ! TODO: validate_preal
     ! TODO: validate_preal_array
+    ! TODO: test rel_tol setting
     
     call logical_test(is_close_wp(1._wp, 1._wp), &
         "is_close_wp, identical numbers", &
@@ -59,11 +60,13 @@ program tests
         "is_close_wp, different numbers", &
         number_of_failures)
     
-    call logical_test(is_close_wp(1._wp, 1.05_wp, eps=0.1_wp), &
+    call logical_test(is_close_wp(1._wp, 1.05_wp, &
+        abs_tol=0.1_wp, rel_tol=0._wp), &
         "is_close_wp, close numbers with set eps, inside eps", &
         number_of_failures)
     
-    call logical_test(.not. is_close_wp(1._wp, 1.15_wp, eps=0.1_wp), &
+    call logical_test(.not. is_close_wp(1._wp, 1.15_wp, &
+        abs_tol=0.1_wp, rel_tol=0._wp), &
         "is_close_wp, close numbers with set eps, outside eps", &
         number_of_failures)
 
