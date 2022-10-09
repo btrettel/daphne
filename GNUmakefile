@@ -3,19 +3,21 @@
 # <https://innolitics.com/articles/make-delete-on-error/>
 .DELETE_ON_ERROR:
 
+# TODO: Try compiling with the Fortran Standard Library instead of your own nonstdlib.f90.
 # TODO: Convert source to C or C++ and compile that way as a portability test. Try multiple converters if possible.
 # TODO: <https://github.com/llvm/llvm-project/tree/main/flang/#building-flang-standalone>
-# TODO: Try compiling with the Fortran Standard Library instead of your own nonstdlib.f90.
 # TODO: <http://fortranwiki.org/fortran/show/Debugging+tools>
-# TODO: Try AMD's Open64 compiler
+# TODO: AMD Open64 compiler
 # TODO: MicroWay NDP Fortran 90 for DOS
+# TODO: <https://github.com/MetOffice/stylist>
 
 FC       := gfortran
 FFLAGS   := -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f95 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-72
 OBIN     := tests
 OFLAG    := -o $(OBIN)
 ORUN     := ./$(OBIN)
-SRC      := $(shell find ./ -maxdepth 1 -type f -name "*.f90")
+SRC      := nonstdlib.f90 daphne.f90 tests.f90
+ALL_SRC  := $(shell find ./ -maxdepth 1 -type f -name "*.f90")
 SPAG_SRC := $(patsubst %.f90, tmp/%.f90,$(SRC))
 SPAG_SMB := $(patsubst %.f90, SPAGged/%.smb,$(SRC))
 
@@ -24,32 +26,41 @@ check: tests ## Compile Daphne and run tests
 	$(ORUN)
 	@echo Tests on $(FC) ran successfully.
 
-# gfortran, ifort, ifx, flang-7, f90 (Oracle), FL32 (Microsoft Fortran PowerStation 4.0)
+# ELF90, gfortran, ifort, ifx, flang-7, sunf95 (Oracle), FL32 (Microsoft Fortran PowerStation 4.0)
+# The reason why ELF90 has the test command is because ELF90 can't return a non-zero exit code. So instead I check for an error file, which, if present, indicates an error.
+# ELF90 is first as it is the hardest to satisfy.
+# TODO: open64
 .PHONY: checkport
 checkport: ## Run tests in many compilers
+	make check FC='wine elf90' FFLAGS='-npause' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' SRC='nonstdlib_elf90.f90 daphne.f90 tests.f90'
+	make clean
 	make check
 	make clean
-	make check FC=ifort FFLAGS='-warn errors -check all -warn all -diag-error=remark,warn,error -O0 -g -traceback -fpe0 -fltconsistency -stand:f95 -debug full -diag-error-limit=1'
+	make check FC=ifort FFLAGS='-warn errors -check all -warn all -diag-error=remark,warn,error -O0 -g -traceback -fpe0 -fltconsistency -stand:f90 -debug full -diag-error-limit=1'
 	make clean
 	make check FC=ifx FFLAGS='-warn errors -warn all -diag-error=remark,warn,error -O0 -g -traceback -fpe0 -fltconsistency -stand:f95 -debug full -diag-error-limit=1'
 	make clean
 	make check FC=flang-7 FFLAGS='-g -Wdeprecated'
 	make clean
-	make check FC=f90 FFLAGS='-g -w4 -errwarn=%all -e -fnonstd -stackvar -ansi -C -fpover -xcheck=%all -U'
+	make check FC=sunf95 FFLAGS='-g -w4 -errwarn=%all -e -fnonstd -stackvar -ansi -C -fpover -xcheck=%all -U'
 	make clean
-	make check FC='wine ~/.wine/drive_c/MSDEV/BIN/FL32.EXE' FFLAGS='/4L72 /4Yb /4Yd /WX /4Yf /4Ys' OBIN='tests.exe' OFLAG='/Fetests.exe' ORUN='wine tests.exe'
+	make check FC='wine fl32' FFLAGS='/4L72 /4Yb /4Yd /WX /4Yf /4Ys' OBIN='tests.exe' OFLAG='/Fetests.exe' ORUN='wine tests.exe'
 	make clean
 	@echo Tests on all compilers ran successfully.
 
 .PHONY: clean
 clean: ## Remove compiled binaries and debugging files
-	rm -rfv tests *.gcda *.gcno *.cmdx *.cmod *.ilm *.stb *.dbg *.o *.mod *.exe *.obj *.fpl *.FPT
+	rm -rfv tests *.gcda *.gcno *.cmdx *.cmod *.ilm *.stb *.dbg *.o *.mod *.exe *.obj *.fpl *.FPT modtable.txt *.map *.exe *.mod *.obj *.lib *.s error.log
 
 # This needs to be run on Ben Trettel's computer as I am using a custom YAML file for CERFACS flint and wrote a wrapper script to interpret the XML output by i-Code CNES.
-lint: clean $(SRC) ## Run linters on Daphne
-	$(foreach source_file,$(SRC),echo ; echo $(source_file):; flint lint --flintrc /home/ben/.local/share/flint/fortran.yaml $(source_file);)
-	-icode-wrapper.py $(SRC)
-	fpt $(SRC)
+lint: clean $(ALL_SRC) ## Run linters on Daphne
+	$(foreach source_file,$(ALL_SRC),echo ; echo $(source_file):; flint lint --flintrc /home/ben/.local/share/flint/fortran.yaml $(source_file);)
+	-icode-wrapper.py $(ALL_SRC)
+	fpt $(ALL_SRC)
+
+# This is a reasonable linter. Daphne doesn't use pure functions because I want to be able to `stop` in some functions. That's not possible until Fortran 2018, via `error stop`, which I'm not using here for Fortran 90 compatibility. F requires that all procedures have no side effects, in other words, that they are `pure` aside from writing formatted I/O to the terminal. I guess that it's more important to have assertions (which `stop` execution) than a guarantee that the procedures don't have side effects. I'm pretty sure mine don't, but maybe they do. Plus, FL32 doesn't have any Fortran 95 features, so no `pure` for there. This is pushing me towards using a preprocessor...
+lintF: clean $(ALL_SRC) ## Test Daphne for compliance with the F standard
+	make tests FC='g95' FFLAGS='-std=F -S' OFLAG=''
 
 .PHONY: stats
 stats: ## Get some statistics for Daphne

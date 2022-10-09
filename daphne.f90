@@ -48,17 +48,15 @@ module daphne
     use nonstdlib
     implicit none
     private
-    public wp
-    public preal
-    public is_close_wp
-    public logical_test
-    public real_comparison_test
-    public tests_end
-    public N
-    public operator(+)
-    public operator(-)
-    public operator(*)
-    public operator(/)
+    public :: is_close_wp
+    public :: logical_test
+    public :: real_comparison_test
+    public :: tests_end
+    public :: N
+    public :: operator(+)
+    public :: operator(-)
+    public :: operator(*)
+    public :: operator(/)
     
     ! 2. Declare parameters
     ! ---------------------
@@ -66,7 +64,7 @@ module daphne
     ! `wp` stands for "working precision" in case I want to change
     ! the precision later. This is double precision for now.
     ! Quad precision: selected_real_kind(33, 4931)
-    integer, parameter :: wp = selected_real_kind(15, 307)
+    integer, public, parameter :: wp = selected_real_kind(15, 307)
     
     ! Kind number for integer used to count preals.
     !integer, parameter :: intk = selected_int_kind(4)
@@ -83,7 +81,7 @@ module daphne
     ! 4. Declare preal type
     ! ---------------------
     
-    type preal
+    type, public :: preal
         ! The preal_id is the index of this variable in the covariance
         ! matrix.
         !integer(kind=intk) :: preal_id
@@ -113,7 +111,9 @@ module daphne
     
     ! TODO: Declare assignment operator to check if bounds of preal
     ! to be assigned to are different than the bounds of the preal
-    ! being assigned from. Pick the more restrictive bounds.
+    ! being assigned from. In other words, if the bounds of the
+    ! preal on the left-hand-side are different from the bounds of
+    ! preal on the right-hand-side. Pick the more restrictive bounds.
     
     interface operator (+) !
         ! Overload the + operator so that it works for preals.
@@ -149,7 +149,7 @@ contains
 !        call check(preal_in%preal_id <= number_of_preals, &
 !            "preal_id not less than or equal to the number of preals.")
         
-        call check(preal_in%stdev > 0._wp, &
+        call check(preal_in%stdev > 0.0_wp, &
             "Standard deviation not greater than zero.")
         
 !        if (preal_in%lower_bound_set) then
@@ -161,6 +161,7 @@ contains
 !            call check(preal_in%mean <= preal_in%upper_bound, &
 !                "Mean not less than upper bound.")
 !        end if
+        return
     end subroutine validate_preal
     
     subroutine validate_preal_array(preal_array_in) !
@@ -173,6 +174,7 @@ contains
                 ubound(preal_array_in, dim=1)
             call validate_preal(preal_array_in(i))
         end do
+        return
     end subroutine validate_preal_array
     
     function is_close_wp(input_real_1, input_real_2, rel_tol, abs_tol) !
@@ -187,26 +189,26 @@ contains
         prec = precision(input_real_1)
         
         if (present(rel_tol)) then
-            call check(rel_tol >= 0._wp, &
+            call check(rel_tol >= 0.0_wp, &
                 msg="Set relative tolerance not zero or more.")
             rel_tol_set = rel_tol
         else
-            rel_tol_set = 10._wp**(-(real(prec, kind=wp) - 2._wp))
+            rel_tol_set = 10.0_wp**(-(real(prec, kind=wp) - 2.0_wp))
         end if
         
         if (present(abs_tol)) then
-            call check(abs_tol >= 0._wp, &
+            call check(abs_tol >= 0.0_wp, &
                 msg="Set absolute tolerance not zero or more.")
             abs_tol_set = abs_tol
         else
-            abs_tol_set = 10._wp**(-(real(prec, kind=wp) - 2._wp))
+            abs_tol_set = 10.0_wp**(-(real(prec, kind=wp) - 2.0_wp))
         end if
         
         tol = max(rel_tol_set * abs(input_real_1), &
                 rel_tol_set * abs(input_real_2), &
                 abs_tol_set)
         
-        call check(tol > 0._wp, &
+        call check(tol > 0.0_wp, &
                     msg="Tolerance not greater than zero.")
         
         if (abs(input_real_1 - input_real_2) < tol) then
@@ -214,6 +216,7 @@ contains
         else
             is_close_wp = .false.
         end if
+        return
     end function is_close_wp
     
     subroutine logical_test(condition, msg, number_of_failures) !
@@ -222,15 +225,18 @@ contains
         
         logical, intent(in) :: condition
         character(len=*), intent(in) :: msg
-        integer, intent(inout) :: number_of_failures
+        integer, intent(in out) :: number_of_failures
         
         if (condition) then
-            print *, "pass: "//msg
+            write(unit=*, fmt=*) "pass: "//msg
         else
-            write(error_unit, *) "fail: "//msg
+            ! LATER: If you start using a preprocessor, set 
+            ! `unit=error_unit` by default. `unit=*` is only used here
+            ! to satisfy ELF90, which can't write to stdout.
+            write(unit=*, fmt=*) "fail: "//msg
             number_of_failures = number_of_failures + 1
         end if
-        print *
+        return
     end subroutine logical_test
     
     subroutine real_comparison_test(program_real, expected_real, &
@@ -240,24 +246,28 @@ contains
         
         real(kind=wp), intent(in) :: program_real, expected_real
         character(len=*), intent(in) :: msg
-        integer, intent(inout) :: number_of_failures
+        integer, intent(in out) :: number_of_failures
         
-        print *, "returned: ", program_real
-        print *, "expected: ", expected_real
+        write(unit=*, fmt=*) "returned:", program_real
+        write(unit=*, fmt=*) "expected:", expected_real
+        write(unit=*, fmt=*) "   error:", &
+                        abs(program_real - expected_real)
         call logical_test(is_close_wp(program_real, expected_real), &
             msg, &
             number_of_failures)
+        return
     end subroutine real_comparison_test
     
     subroutine tests_end(number_of_failures) !
         integer, intent(in) :: number_of_failures
         
         if (number_of_failures > 0) then
-            print *, number_of_failures, "test(s) failed."
+            write(unit=*, fmt=*) number_of_failures, "test(s) failed."
             call error_stop("Exiting with error.")
         else
-            print *, "All tests passed."
+            write(unit=*, fmt=*) "All tests passed."
         end if
+        return
     end subroutine tests_end
     
     ! 7. Convenience procedures
@@ -289,6 +299,7 @@ contains
 !        end if
         
         call validate_preal(preal_out)
+        return
     end function N
     
     ! 9. Operator functions
@@ -307,6 +318,7 @@ contains
         preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
         
         call validate_preal(preal_out)
+        return
     end function padd
     
     function psubtract(preal_1, preal_2) result(preal_out) !
@@ -319,6 +331,7 @@ contains
         preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
         
         call validate_preal(preal_out)
+        return
     end function psubtract
     
     function pmultiply(preal_1, preal_2) result(preal_out) !
@@ -331,6 +344,7 @@ contains
         preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
         
         call validate_preal(preal_out)
+        return
     end function pmultiply
     
     function pdivide(preal_1, preal_2) result(preal_out) !
@@ -343,6 +357,7 @@ contains
         preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
         
         call validate_preal(preal_out)
+        return
     end function pdivide
     
     ! 9b. preal arrays
@@ -374,6 +389,7 @@ contains
         end do
         
         call validate_preal_array(preal_array_out)
+        return
     end function padd_array
     
     function psubtract_array(preal_array_1, preal_array_2) &
@@ -402,6 +418,7 @@ contains
         end do
         
         call validate_preal_array(preal_array_out)
+        return
     end function psubtract_array
     
     function pmultiply_array(preal_array_1, preal_array_2) &
@@ -430,6 +447,7 @@ contains
         end do
         
         call validate_preal_array(preal_array_out)
+        return
     end function pmultiply_array
     
     function pdivide_array(preal_array_1, preal_array_2) &
@@ -458,5 +476,6 @@ contains
         end do
         
         call validate_preal_array(preal_array_out)
+        return
     end function pdivide_array
 end module daphne

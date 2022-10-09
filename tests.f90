@@ -220,4 +220,5 @@ program tests
     ! ---------------
     
     call tests_end(number_of_failures)
+    stop
 end program tests

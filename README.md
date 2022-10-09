@@ -6,7 +6,9 @@ Daphne is (will be) a Fortran library for rigorous data analysis in the physical
 
 Initial goal:
 
-- Make array operators work in 2D arrays in the process.
+- Have a different nonstdlib.f90 file for ELF90. You don't even need to modify the other files as the module name is not the same as the file name. Put all the incompatible parts in there. Make error_unit write to an external file that is read in the GNUmakefile so that Make knows that the tests failed.
+- Make `check` message not optional.
+- Make array operators work in 2D arrays.
 - Add tests for 2D arrays.
 - Add `all_close_wp` function. <https://stdlib.fortran-lang.org/page/specs/stdlib_math.html#all_close-function>
 - Dimensional homogeneity enforced for length, mass, and time.
@@ -48,3 +50,4 @@ Portability is a major concern of mine when writing Daphne. As stated earlier, o
 - flang-7 7.0.1
 - Oracle Developer Studio 12.6 Fortran Compiler, version 8.8
 - Microsoft Fortran PowerStation 4.0a
+- Essential Lahey Fortran 90 4.00b

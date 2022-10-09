@@ -55,8 +55,17 @@ contains
     subroutine error_stop(msg) !
         ! Stops execution and prints error message.
         character(len=*), intent(in) :: msg
+        integer :: i
         
+        open(unit=error_unit, file="error.log", &
+                status="replace", iostat=i, position="append")
+        if (i /= 0) then
+            write(unit=*, fmt=*) "Can't open error log."
+            stop
+        end if
+        write(unit=*, fmt=*) msg
         write(unit=error_unit, fmt=*) msg
-        stop 1
+        close(error_unit)
+        stop
     end subroutine error_stop
 end module nonstdlib
