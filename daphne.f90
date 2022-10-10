@@ -31,12 +31,12 @@ module daphne
     ! -----------------
     ! 
     ! 1. Set modules and other boilerplate
-    ! 2. Declare parameters
-    ! 3. Declare variables
-    ! 4. Initialize variables
-    ! 5. Declare operators
-    ! 6. Testing procedures
-    ! 7. Convenience procedures
+    ! 2. Declare public procedures and operators
+    ! 3. Declare parameters
+    ! 4. Declare variables
+    ! 5. Initialize variables
+    ! 6. Declare operators
+    ! 7. Testing procedures
     ! 8. Constructors
     ! 9. Operator functions
     ! 9a. preal scalars
@@ -45,9 +45,13 @@ module daphne
     ! 1. Set modules and other boilerplate
     ! ------------------------------------
     
-    use nonstdlib
+    use error
     implicit none
     private
+    
+    ! 2. Declare public procedures and operators
+    ! ------------------------------------------
+    
     public :: is_close_wp
     public :: logical_test
     public :: real_comparison_test
@@ -58,7 +62,7 @@ module daphne
     public :: operator(*)
     public :: operator(/)
     
-    ! 2. Declare parameters
+    ! 3. Declare parameters
     ! ---------------------
     
     ! `wp` stands for "working precision" in case I want to change
@@ -69,7 +73,7 @@ module daphne
     ! Kind number for integer used to count preals.
     !integer, parameter :: intk = selected_int_kind(4)
     
-    ! 3. Declare variables
+    ! 4. Declare variables
     ! --------------------
     
     ! number of preals, used as the dimension of the covariance matrix
@@ -78,7 +82,7 @@ module daphne
     ! covariance matrix
     ! real(kind=wp), allocatable, dimension(:,:) :: covariance
     
-    ! 4. Declare preal type
+    ! 5. Declare preal type
     ! ---------------------
     
     type, public :: preal
@@ -106,7 +110,7 @@ module daphne
 !        real(kind=wp) :: upper_bound
     end type preal
     
-    ! 5. Declare operators
+    ! 6. Declare operators
     ! --------------------
     
     ! TODO: Declare assignment operator to check if bounds of preal
@@ -135,7 +139,7 @@ module daphne
         module procedure pdivide, pdivide_array
     end interface
 contains
-    ! 6. Testing procedures
+    ! 7. Testing procedures
     ! ---------------------
     
     subroutine validate_preal(preal_in) !
@@ -144,22 +148,22 @@ contains
         type(preal), intent(in) :: preal_in
         
 !        call check(preal_in%preal_id > 0_intk, &
-!            "preal_id not greater than zero.")
+!            msg="preal_id not greater than zero.")
         
 !        call check(preal_in%preal_id <= number_of_preals, &
-!            "preal_id not less than or equal to the number of preals.")
+!            msg="preal_id not less than or equal to the number of preals.")
         
         call check(preal_in%stdev > 0.0_wp, &
-            "Standard deviation not greater than zero.")
+            msg="Standard deviation not greater than zero.")
         
 !        if (preal_in%lower_bound_set) then
 !            call check(preal_in%mean >= preal_in%lower_bound, &
-!                "Mean not greater than lower bound.")
+!                msg="Mean not greater than lower bound.")
 !        end if
         
 !        if (preal_in%upper_bound_set) then
 !            call check(preal_in%mean <= preal_in%upper_bound, &
-!                "Mean not less than upper bound.")
+!                msg="Mean not less than upper bound.")
 !        end if
         return
     end subroutine validate_preal
@@ -230,10 +234,7 @@ contains
         if (condition) then
             write(unit=*, fmt=*) "pass: "//msg
         else
-            ! LATER: If you start using a preprocessor, set 
-            ! `unit=error_unit` by default. `unit=*` is only used here
-            ! to satisfy ELF90, which can't write to stdout.
-            write(unit=*, fmt=*) "fail: "//msg
+            call error_print("fail: "//msg)
             number_of_failures = number_of_failures + 1
         end if
         return
@@ -248,9 +249,9 @@ contains
         character(len=*), intent(in) :: msg
         integer, intent(in out) :: number_of_failures
         
-        write(unit=*, fmt=*) "returned:", program_real
-        write(unit=*, fmt=*) "expected:", expected_real
-        write(unit=*, fmt=*) "   error:", &
+        write(unit=*, fmt=*) "  returned:", program_real
+        write(unit=*, fmt=*) "  expected:", expected_real
+        write(unit=*, fmt=*) "difference:", &
                         abs(program_real - expected_real)
         call logical_test(is_close_wp(program_real, expected_real), &
             msg, &
@@ -262,6 +263,8 @@ contains
         integer, intent(in) :: number_of_failures
         
         if (number_of_failures > 0) then
+            ! TODO: After adding a function to convert integers to
+            ! strings, change the next line to use error_print.
             write(unit=*, fmt=*) number_of_failures, "test(s) failed."
             call error_stop("Exiting with error.")
         else
@@ -269,11 +272,6 @@ contains
         end if
         return
     end subroutine tests_end
-    
-    ! 7. Convenience procedures
-    ! -------------------------
-    
-    
     
     ! 8. Constructors
     ! ---------------
@@ -375,9 +373,11 @@ contains
         ! Check that preal_array_1 and preal_array_1 have the same
         ! dimensions.
         call check(lbound(preal_array_1, dim=1) == &
-                    lbound(preal_array_2, dim=1))
+                    lbound(preal_array_2, dim=1), &
+                    msg="padd_array: lower array bound mismatch")
         call check(ubound(preal_array_1, dim=1) == &
-                    ubound(preal_array_2, dim=1))
+                    ubound(preal_array_2, dim=1), &
+                    msg="padd_array: upper array bound mismatch")
         
         ! Allocate the output array.
         
@@ -404,9 +404,11 @@ contains
         ! Check that preal_array_1 and preal_array_1 have the same
         ! dimensions.
         call check(lbound(preal_array_1, dim=1) == &
-                    lbound(preal_array_2, dim=1))
+                    lbound(preal_array_2, dim=1), &
+                    msg="psubtract_array: lower array bound mismatch")
         call check(ubound(preal_array_1, dim=1) == &
-                    ubound(preal_array_2, dim=1))
+                    ubound(preal_array_2, dim=1), &
+                    msg="psubtract_array: upper array bound mismatch")
         
         ! Allocate the output array.
         
@@ -433,9 +435,11 @@ contains
         ! Check that preal_array_1 and preal_array_1 have the same
         ! dimensions.
         call check(lbound(preal_array_1, dim=1) == &
-                    lbound(preal_array_2, dim=1))
+                    lbound(preal_array_2, dim=1), &
+                    msg="pmultiply_array: lower array bound mismatch")
         call check(ubound(preal_array_1, dim=1) == &
-                    ubound(preal_array_2, dim=1))
+                    ubound(preal_array_2, dim=1), &
+                    msg="pmultiply_array: upper array bound mismatch")
         
         ! Allocate the output array.
         
@@ -462,9 +466,11 @@ contains
         ! Check that preal_array_1 and preal_array_1 have the same
         ! dimensions.
         call check(lbound(preal_array_1, dim=1) == &
-                    lbound(preal_array_2, dim=1))
+                    lbound(preal_array_2, dim=1), &
+                    msg="pdivide_array: lower array bound mismatch")
         call check(ubound(preal_array_1, dim=1) == &
-                    ubound(preal_array_2, dim=1))
+                    ubound(preal_array_2, dim=1), &
+                    msg="pdivide_array: upper array bound mismatch")
         
         ! Allocate the output array.
         

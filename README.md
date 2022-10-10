@@ -4,15 +4,18 @@ Status: under development; almost nothing works yet
 
 Daphne is (will be) a Fortran library for rigorous data analysis in the physical sciences. Dimensional analysis will prevent many potential bugs, and uncertainty propagation will reveal the limits of what can be understood from the data. Daphne prioritizes correctness over speed, so this library is not intended for HPC.
 
-Initial goal:
+Next steps:
 
-- Have a different nonstdlib.f90 file for ELF90. You don't even need to modify the other files as the module name is not the same as the file name. Put all the incompatible parts in there. Make error_unit write to an external file that is read in the GNUmakefile so that Make knows that the tests failed.
-- Make `check` message not optional.
+- Put all non-pure procedures in error.f90. Have separate versions for normal compilers (error.f90), ELF90 (error_elf90.f90), and `g95 -std=F` (error_f.f90). For example, in error_f.f90, remove all `stop` statements so that the procedures can be pure. If F only requires *functions* to have no side effects, then I could make `check` not call `error_stop` so that `error_stop` could be called in `tests_end` and still end the program with an exit code of 1.
+- See what changes are necessary to get Daphne to compile with `g95 -std=F`.
+- See how to eliminate warning about `in out` from FPT.
 - Make array operators work in 2D arrays.
 - Add tests for 2D arrays.
 - Add `all_close_wp` function. <https://stdlib.fortran-lang.org/page/specs/stdlib_math.html#all_close-function>
 - Dimensional homogeneity enforced for length, mass, and time.
 - First-order uncertainty propagation for uncorrelated variables.
+- Make Fortran 2008 version of check.f90 (check_f08.f90) using `error stop` instead of stop, and `iso_fortran_env` to get `error_unit`. Compile with this in gfortran and ifort in Fortran 2008 compliance mode in addition to compiling with those in their current standards compliance modes.
+- Move `logical_test`, `real_comparison_test`, and `tests_end` to tests.f90.
 
 Later:
 

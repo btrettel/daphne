@@ -27,8 +27,8 @@ program tests
     ! 1. Set modules and other boilerplate
     ! ------------------------------------
     
+    use error
     use daphne
-    use nonstdlib
     implicit none
     
     ! 2. Declare variables

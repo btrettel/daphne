@@ -16,7 +16,7 @@ FFLAGS   := -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f95 -Wconversion 
 OBIN     := tests
 OFLAG    := -o $(OBIN)
 ORUN     := ./$(OBIN)
-SRC      := nonstdlib.f90 daphne.f90 tests.f90
+SRC      := error.f90 daphne.f90 tests.f90
 ALL_SRC  := $(shell find ./ -maxdepth 1 -type f -name "*.f90")
 SPAG_SRC := $(patsubst %.f90, tmp/%.f90,$(SRC))
 SPAG_SMB := $(patsubst %.f90, SPAGged/%.smb,$(SRC))
@@ -32,7 +32,7 @@ check: tests ## Compile Daphne and run tests
 # TODO: open64
 .PHONY: checkport
 checkport: ## Run tests in many compilers
-	make check FC='wine elf90' FFLAGS='-npause' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' SRC='nonstdlib_elf90.f90 daphne.f90 tests.f90'
+	make check FC='wine elf90' FFLAGS='-npause' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' SRC='error_elf90.f90 daphne.f90 tests.f90'
 	make clean
 	make check
 	make clean
@@ -60,7 +60,7 @@ lint: clean $(ALL_SRC) ## Run linters on Daphne
 
 # This is a reasonable linter. Daphne doesn't use pure functions because I want to be able to `stop` in some functions. That's not possible until Fortran 2018, via `error stop`, which I'm not using here for Fortran 90 compatibility. F requires that all procedures have no side effects, in other words, that they are `pure` aside from writing formatted I/O to the terminal. I guess that it's more important to have assertions (which `stop` execution) than a guarantee that the procedures don't have side effects. I'm pretty sure mine don't, but maybe they do. Plus, FL32 doesn't have any Fortran 95 features, so no `pure` for there. This is pushing me towards using a preprocessor...
 lintF: clean $(ALL_SRC) ## Test Daphne for compliance with the F standard
-	make tests FC='g95' FFLAGS='-std=F -S' OFLAG=''
+	make tests FC='g95' FFLAGS='-std=F -S' OFLAG='' SRC='error_f.f90 daphne.f90 tests.f90'
 
 .PHONY: stats
 stats: ## Get some statistics for Daphne
