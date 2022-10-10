@@ -28,7 +28,7 @@ check: tests ## Compile Daphne and run tests
 # TODO: open64
 .PHONY: checkport
 checkport: ## Run tests in many compilers
-	make check FC='wine elf90' FFLAGS='-npause' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' FPPFLAGS='-Delf90 -Ddouble_precision' SRC='daphne.f90 tests.f90'
+	make check FC='wine elf90' FFLAGS='-npause' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' FPPFLAGS='-D__ELF90__ -D__DP__' SRC='daphne.f90 tests.f90'
 	make clean
 	make check
 	make clean
@@ -36,11 +36,11 @@ checkport: ## Run tests in many compilers
 	make clean
 	make check FC=ifx FFLAGS='-fpp -warn errors -warn all -diag-error=remark,warn,error -O0 -g -traceback -fpe0 -fltconsistency -stand:f95 -debug full -diag-error-limit=1'
 	make clean
-	make check FC=flang-7 FFLAGS='-cpp -Ddouble_precision -g -Wdeprecated'
+	make check FC=flang-7 FFLAGS='-cpp -D__DP__ -g -Wdeprecated'
 	make clean
 	make check FC=sunf95 FFLAGS='-fpp -g -w4 -errwarn=%all -e -fnonstd -stackvar -ansi -C -fpover -xcheck=%all -U'
 	make clean
-	make check FC='wine fl32' FFLAGS='/4L72 /4Yb /4Yd /WX /4Yf /4Ys' OBIN='tests.exe' OFLAG='/Fetests.exe' ORUN='wine tests.exe' FPPFLAGS='-Ddouble_precision' SRC='daphne.f90 tests.f90'
+	make check FC='wine fl32' FFLAGS='/4L72 /4Yb /4Yd /WX /4Yf /4Ys' OBIN='tests.exe' OFLAG='/Fetests.exe' ORUN='wine tests.exe' FPPFLAGS='-D__DP__' SRC='daphne.f90 tests.f90'
 	make clean
 	@echo Tests on all compilers ran successfully.
 
@@ -58,7 +58,7 @@ lint: clean $(SRC_FPP) ## Run linters on Daphne
 # This is a reasonable linter. Daphne doesn't use pure functions because I want to be able to `stop` in some functions. That's not possible until Fortran 2018, via `error stop`, which I'm not using here for Fortran 90 compatibility. F requires that all procedures have no side effects, in other words, that they are `pure` aside from writing formatted I/O to the terminal. I guess that it's more important to have assertions (which `stop` execution) than a guarantee that the procedures don't have side effects. I'm pretty sure mine don't, but maybe they do. Plus, FL32 doesn't have any Fortran 95 features, so no `pure` for there. This is pushing me towards using a preprocessor...
 # TODO: Check that g95 will run preprocessor
 lintF: clean $(SRC) ## Test Daphne for compliance with the F standard
-	make tests FC='g95' FFLAGS='-std=F -S' OFLAG=''
+	make tests FC='g95' FFLAGS='-std=F -S' OFLAG='' FPPFLAGS='-D__PURE__=pure' SRC='daphne.f90 tests.f90'
 
 .PHONY: stats
 stats: ## Get some statistics for Daphne

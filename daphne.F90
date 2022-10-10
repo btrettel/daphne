@@ -6,6 +6,12 @@
 ! Project: [Daphne](https://github.com/btrettel/daphne)
 ! License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
 
+#ifndef __PURE__
+#define __PURE__
+#define __NOTPURE__
+#endif
+! __PURE__
+
 module daphne
     ! Summary
     ! -------
@@ -59,6 +65,16 @@ module daphne
     public :: real_comparison_test
     public :: tests_end
     public :: N
+    private :: validate_preal
+    private :: validate_preal_array
+    private :: padd
+    private :: psubtract
+    private :: pmultiply
+    private :: pdivide
+    private :: padd_array
+    private :: psubtract_array
+    private :: pmultiply_array
+    private :: pdivide_array
     public :: operator(+)
     public :: operator(-)
     public :: operator(*)
@@ -68,9 +84,8 @@ module daphne
     ! ---------------------
     
     ! `wp` stands for "working precision" in case I want to change
-    ! the precision later. This is double precision for now.
-    ! Quad precision: selected_real_kind(33, 4931)
-#ifndef double_precision
+    ! the precision later.
+#ifndef __DP__
     integer, public, parameter :: wp = selected_real_kind(33, 4931)
 #else
     integer, public, parameter :: wp = selected_real_kind(15, 307)
@@ -148,7 +163,7 @@ contains
     ! 7. Testing procedures
     ! ---------------------
     
-    subroutine check(condition, msg) !
+    __PURE__ subroutine check(condition, msg) !
         ! Implementation of an assertion subroutine. Unlike in the
         ! stdlib, the message is required here.
         ! <https://stdlib.fortran-lang.org/page/specs/stdlib_error.html>
@@ -156,6 +171,7 @@ contains
         logical, intent(in) :: condition
         character(len=*), intent(in) :: msg
         
+#ifdef __NOTPURE__
         if (.not. condition) then
             call error_stop(msg)
             
@@ -165,31 +181,35 @@ contains
 !                call error_stop("Check failed.")
 !            end if
         end if
+#endif
         return
     end subroutine check
     
-    subroutine error_stop(msg) !
+    __PURE__ subroutine error_stop(msg) !
         ! Stops execution and prints error message.
         character(len=*), intent(in) :: msg
         
+#ifdef __NOTPURE__
         call error_print(msg)
-#ifndef elf90
+#ifndef __ELF90__
         stop 1
 #else
         stop
 #endif
+#endif
     end subroutine error_stop
     
-    subroutine error_print(msg) !
+    __PURE__ subroutine error_print(msg) !
         ! Prints error message.
         character(len=*), intent(in) :: msg
+#ifdef __NOTPURE__
         ! Not fully portable as a portable approach requires Fortran
         ! 2003. <https://stackoverflow.com/a/8508757/1124489>
         ! But the Oracle compiler doesn't have this as of
         ! 2022-10-01! So I'm using the non-portable approach.
         integer, parameter :: error_unit = 0
         
-#ifndef elf90
+#ifndef __ELF90__
         write(unit=error_unit, fmt=*) msg
 #else
         ! ELF90 will compile if `write(unit=error_unit, fmt=*) msg`
@@ -214,14 +234,16 @@ contains
         write(unit=error_unit, fmt=*) msg
         close(error_unit)
 #endif
+#endif
         return
     end subroutine error_print
     
-    subroutine validate_preal(preal_in) !
+    __PURE__ subroutine validate_preal(preal_in) !
         ! Check that a preal is plausible.
         
         type(preal), intent(in) :: preal_in
         
+#ifdef __NOTPURE__
 !        call check(preal_in%preal_id > 0_intk, &
 !            msg="preal_id not greater than zero.")
         
@@ -240,19 +262,22 @@ contains
 !            call check(preal_in%mean <= preal_in%upper_bound, &
 !                msg="Mean not less than upper bound.")
 !        end if
+#endif
         return
     end subroutine validate_preal
     
-    subroutine validate_preal_array(preal_array_in) !
+    __PURE__ subroutine validate_preal_array(preal_array_in) !
         ! Check that a preal array is plausible.
         
         type(preal), dimension(:), intent(in) :: preal_array_in
+#ifdef __NOTPURE__
         integer :: i
         
         do i = lbound(preal_array_in, dim=1), &
                 ubound(preal_array_in, dim=1)
             call validate_preal(preal_array_in(i))
         end do
+#endif
         return
     end subroutine validate_preal_array
     
