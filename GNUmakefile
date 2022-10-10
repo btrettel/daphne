@@ -28,8 +28,8 @@ check: tests ## Compile Daphne and run tests
 # TODO: open64
 .PHONY: checkport
 checkport: ## Run tests in many compilers
-	#make check FC='wine elf90' FFLAGS='-npause' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' SRC='daphne.f90 tests.f90'
-	#make clean
+	make check FC='wine elf90' FFLAGS='-npause' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' FPPFLAGS='-Delf90 -Ddouble_precision' SRC='daphne.f90 tests.f90'
+	make clean
 	make check
 	make clean
 	make check FC=ifort FFLAGS='-fpp -warn errors -check all -warn all -diag-error=remark,warn,error -O0 -g -traceback -fpe0 -fltconsistency -stand:f90 -debug full -diag-error-limit=1'

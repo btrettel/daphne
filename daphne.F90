@@ -173,7 +173,11 @@ contains
         character(len=*), intent(in) :: msg
         
         call error_print(msg)
+#ifndef elf90
         stop 1
+#else
+        stop
+#endif
     end subroutine error_stop
     
     subroutine error_print(msg) !
@@ -185,7 +189,31 @@ contains
         ! 2022-10-01! So I'm using the non-portable approach.
         integer, parameter :: error_unit = 0
         
+#ifndef elf90
         write(unit=error_unit, fmt=*) msg
+#else
+        ! ELF90 will compile if `write(unit=error_unit, fmt=*) msg`
+        ! is used by itself, but the following error will appear at
+        ! runtime:
+        ! > No file connected to unit (see "Input/Output" in the
+        ! > Essential Lahey Fortran 90 Reference).
+        ! So as far as I can tell, ELF90 can only write to stdout. So
+        ! I write error messages to stdout and an error log file.
+        ! Since ELF90 can't have non-zero exit codes, the error log
+        ! is how I tell whether the tests succeeded or failed.
+        
+        integer :: i
+        
+        open(unit=error_unit, file="error.log", &
+                status="replace", iostat=i, position="append")
+        if (i /= 0) then
+            write(unit=*, fmt=*) "Can't open error log."
+            stop
+        end if
+        write(unit=*, fmt=*) msg
+        write(unit=error_unit, fmt=*) msg
+        close(error_unit)
+#endif
         return
     end subroutine error_print
     
