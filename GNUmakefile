@@ -25,10 +25,12 @@ check: tests ## Compile Daphne and run tests
 # ELF90, gfortran, ifort, ifx, flang-7, sunf95 (Oracle), FL32 (Microsoft Fortran PowerStation 4.0)
 # The reason why ELF90 has the test command is because ELF90 can't return a non-zero exit code. So instead I check for an error file, which, if present, indicates an error.
 # ELF90 is first as it is the hardest to satisfy.
-# TODO: open64
+# TODO: open64, `open64_flags := -c -Ddouble_precision -fullwarn -col80 -Wuninitialized`
 .PHONY: checkport
 checkport: ## Run tests in many compilers
 	make check FC='wine elf90' FFLAGS='-npause' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' FPPFLAGS='-D__ELF90__ -D__DP__' SRC='daphne.f90 tests.f90'
+	make clean
+	make tests FC='g95' FFLAGS='-std=F -S' OFLAG='' FPPFLAGS='-D__PURE__=pure' SRC='daphne.f90 tests.f90'
 	make clean
 	make check
 	make clean
@@ -54,11 +56,6 @@ lint: clean $(SRC_FPP) ## Run linters on Daphne
 	$(foreach source_file,$(SRC_FPP),echo ; echo $(source_file):; flint lint --flintrc /home/ben/.local/share/flint/fortran.yaml $(source_file);)
 	-icode-wrapper.py $(SRC_FPP)
 	fpt $(SRC_FPP) %"no warnings for spacing"
-
-# This is a reasonable linter. Daphne doesn't use pure functions because I want to be able to `stop` in some functions. That's not possible until Fortran 2018, via `error stop`, which I'm not using here for Fortran 90 compatibility. F requires that all procedures have no side effects, in other words, that they are `pure` aside from writing formatted I/O to the terminal. I guess that it's more important to have assertions (which `stop` execution) than a guarantee that the procedures don't have side effects. I'm pretty sure mine don't, but maybe they do. Plus, FL32 doesn't have any Fortran 95 features, so no `pure` for there. This is pushing me towards using a preprocessor...
-# TODO: Check that g95 will run preprocessor
-lintF: clean $(SRC) ## Test Daphne for compliance with the F standard
-	make tests FC='g95' FFLAGS='-std=F -S' OFLAG='' FPPFLAGS='-D__PURE__=pure' SRC='daphne.f90 tests.f90'
 
 .PHONY: stats
 stats: ## Get some statistics for Daphne

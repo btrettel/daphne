@@ -7,7 +7,6 @@ Daphne is (will be) a Fortran library for rigorous data analysis in the physical
 Next steps:
 
 - Switch to preprocessor.
-    - F mode: adds `pure` in `check`, `error_stop`, `error_print`, `validate_preal`, `validate_preal_array`; `check`, `error_stop`, and `error_print` do nothing and become pure
     - Add (optional) file and line numbers to `check`.
     - `__CHECK(` expands to `check(file="__FILE__", line="__LINE__"`
         - This is perhaps the most important reason to use the preprocessor. I don't think it's possible otherwise to get the line numbers.
