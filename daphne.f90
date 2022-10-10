@@ -45,13 +45,15 @@ module daphne
     ! 1. Set modules and other boilerplate
     ! ------------------------------------
     
-    use error
     implicit none
     private
     
     ! 2. Declare public procedures and operators
     ! ------------------------------------------
     
+    public :: check
+    public :: error_stop
+    public :: error_print
     public :: is_close_wp
     public :: logical_test
     public :: real_comparison_test
@@ -141,6 +143,47 @@ module daphne
 contains
     ! 7. Testing procedures
     ! ---------------------
+    
+    subroutine check(condition, msg) !
+        ! Implementation of an assertion subroutine. Unlike in the
+        ! stdlib, the message is required here.
+        ! <https://stdlib.fortran-lang.org/page/specs/stdlib_error.html>
+        ! TODO: Add (optional) file and line numbers to this.
+        logical, intent(in) :: condition
+        character(len=*), intent(in) :: msg
+        
+        if (.not. condition) then
+            call error_stop(msg)
+            
+!            if (present(msg)) then
+!                call error_stop(msg)
+!            else
+!                call error_stop("Check failed.")
+!            end if
+        end if
+        return
+    end subroutine check
+    
+    subroutine error_stop(msg) !
+        ! Stops execution and prints error message.
+        character(len=*), intent(in) :: msg
+        
+        call error_print(msg)
+        stop 1
+    end subroutine error_stop
+    
+    subroutine error_print(msg) !
+        ! Prints error message.
+        character(len=*), intent(in) :: msg
+        ! Not fully portable as a portable approach requires Fortran
+        ! 2003. <https://stackoverflow.com/a/8508757/1124489>
+        ! But the Oracle compiler doesn't have this as of
+        ! 2022-10-01! So I'm using the non-portable approach.
+        integer, parameter :: error_unit = 0
+        
+        write(unit=error_unit, fmt=*) msg
+        return
+    end subroutine error_print
     
     subroutine validate_preal(preal_in) !
         ! Check that a preal is plausible.

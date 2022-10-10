@@ -6,16 +6,23 @@ Daphne is (will be) a Fortran library for rigorous data analysis in the physical
 
 Next steps:
 
-- Put all non-pure procedures in error.f90. Have separate versions for normal compilers (error.f90), ELF90 (error_elf90.f90), and `g95 -std=F` (error_f.f90). For example, in error_f.f90, remove all `stop` statements so that the procedures can be pure. If F only requires *functions* to have no side effects, then I could make `check` not call `error_stop` so that `error_stop` could be called in `tests_end` and still end the program with an exit code of 1.
-- See what changes are necessary to get Daphne to compile with `g95 -std=F`.
-- See how to eliminate warning about `in out` from FPT.
+- Switch to preprocessor.
+    - F mode: adds `pure` in `check`, `error_stop`, `error_print`, `validate_preal`, `validate_preal_array`; `check`, `error_stop`, and `error_print` do nothing and become pure
+    - ELF90 mode: `_INOUT_` to `inout` by default, `in out` otherwise; `error_print` changes
+    - Add (optional) file and line numbers to `check`.
+    - `__CHECK(` expands to `check(file="__FILE__", line="__LINE__"`
+        - This is perhaps the most important reason to use the preprocessor. I don't think it's possible otherwise to get the line numbers.
+    - ELF90 and FL32 each will need a separate preprocessing step.
+    - Linters will need separate preprocessing step.
+    - Compile each file individually.
+    - Switch certain compilers to quad precision, and make sure that the near-equality check is tighter in those cases.
+    - Add preprocessor directive to get Git revision number so you can put it in the output.
+- Move `logical_test`, `real_comparison_test`, and `tests_end` to tests.f90.
 - Make array operators work in 2D arrays.
 - Add tests for 2D arrays.
 - Add `all_close_wp` function. <https://stdlib.fortran-lang.org/page/specs/stdlib_math.html#all_close-function>
 - Dimensional homogeneity enforced for length, mass, and time.
 - First-order uncertainty propagation for uncorrelated variables.
-- Make Fortran 2008 version of check.f90 (check_f08.f90) using `error stop` instead of stop, and `iso_fortran_env` to get `error_unit`. Compile with this in gfortran and ifort in Fortran 2008 compliance mode in addition to compiling with those in their current standards compliance modes.
-- Move `logical_test`, `real_comparison_test`, and `tests_end` to tests.f90.
 
 Later:
 

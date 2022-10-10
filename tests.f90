@@ -27,7 +27,6 @@ program tests
     ! 1. Set modules and other boilerplate
     ! ------------------------------------
     
-    use error
     use daphne
     implicit none
     
