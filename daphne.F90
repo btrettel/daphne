@@ -1,4 +1,4 @@
-! daphne.f90 - module for uncertain dimensioned variables
+! daphne.F90 - module for uncertain dimensioned variables
 ! =======================================================
 ! 
 ! Author: Ben Trettel (<http://trettel.us/>)
@@ -10,7 +10,6 @@
 #define __PURE__
 #define __NOTPURE__
 #endif
-! __PURE__
 
 module daphne
     ! Summary
@@ -32,6 +31,8 @@ module daphne
     ! distributed variable:
     ! 
     !     x = N(1.5_wp, 0.1_wp)
+    ! 
+    ! A preprocessor is required for daphne.F90.
     ! 
     ! Table of contents
     ! -----------------

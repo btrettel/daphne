@@ -8,7 +8,7 @@ Next steps:
 
 - Switch to preprocessor.
     - Add (optional) file and line numbers to `check`.
-    - `__CHECK(` expands to `check(file="__FILE__", line="__LINE__"`
+    - `__CHECK(` expands to `check(file="__FILE__", line="__LINE__",`
         - This is perhaps the most important reason to use the preprocessor. I don't think it's possible otherwise to get the line numbers.
     - Compile each file individually.
     - Add preprocessor directive to get Git revision number so you can put it in the output.
@@ -44,15 +44,5 @@ Initially, I thought that static typing would mean that I'd get a compile-time c
 
 Portability is a major concern of mine when writing Daphne. As stated earlier, one goal is for Daphne to still be usable in 30 years. I can not predict which compilers will be supported then, so regularly compile on multiple compilers to identify code that is not portable. I am writing to the Fortran 90 standard, as coverage of even the Fortran 2003 standard can be spotty as of 2022. Targeting Fortran 90 unfortunately leads to some portability concerns in itself.
 
-- The way nonstdlib.f90 writes to stderr is conventional but not standard and may not be fully portable. [A standard way to write to stderr was not available until Fortran 2003](https://stackoverflow.com/a/8508757/1124489), but the Oracle Fortran compiler does not implement this part of the standard. The value of `error_unit` in nonstdlib.f90 may need to change depending on the compiler. The following compilers do not appear to write to stderr based on the default value of `error_unit` (0) in nonstdlib.f90:
+- The way `error_print` writes to stderr is conventional but not standard and may not be fully portable. [A standard way to write to stderr was not available until Fortran 2003](https://stackoverflow.com/a/8508757/1124489), but the Oracle Fortran compiler does not implement this part of the standard. The value of `error_unit` in `error_print` may need to change depending on the compiler. The following compilers do not appear to write to stderr based on the default value of `error_unit` (0) in `error_print`:
     - Microsoft Fortran PowerStation 4.0 (The documentation does not mention any way to write to stderr, so this compiler may not be able to.)
-
-### Compilers Daphne has been tested with
-
-- gfortran 9.4.0
-- ifort 2021.6.0
-- ifx 2022.1.0
-- flang-7 7.0.1
-- Oracle Developer Studio 12.6 Fortran Compiler, version 8.8
-- Microsoft Fortran PowerStation 4.0a
-- Essential Lahey Fortran 90 4.00b

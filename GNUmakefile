@@ -24,8 +24,9 @@ check: tests ## Compile Daphne and run tests
 
 # ELF90, gfortran, ifort, ifx, flang-7, sunf95 (Oracle), FL32 (Microsoft Fortran PowerStation 4.0)
 # The reason why ELF90 has the test command is because ELF90 can't return a non-zero exit code. So instead I check for an error file, which, if present, indicates an error.
-# ELF90 is first as it is the hardest to satisfy.
-# TODO: open64, `open64_flags := -c -Ddouble_precision -fullwarn -col80 -Wuninitialized`
+# ELF90 is first as it is hard to satisfy.
+# `g95 -std=F` is second as it is also hard to satisfy.
+# g95 and openf95 won't produce executables due to obsolete dependencies, but they will compile. That is why those compilers use `make tests` and not `make check`: `make tests` won't run the executable.
 .PHONY: checkport
 checkport: ## Run tests in many compilers
 	make check FC='wine elf90' FFLAGS='-npause' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' FPPFLAGS='-D__ELF90__ -D__DP__' SRC='daphne.f90 tests.f90'
@@ -41,6 +42,8 @@ checkport: ## Run tests in many compilers
 	make check FC=flang-7 FFLAGS='-cpp -D__DP__ -g -Wdeprecated'
 	make clean
 	make check FC=sunf95 FFLAGS='-fpp -g -w4 -errwarn=%all -e -fnonstd -stackvar -ansi -C -fpover -xcheck=%all -U'
+	make clean
+	make tests FC=openf95 FFLAGS='-c -D__DP__ -fullwarn -col72 -Wuninitialized'
 	make clean
 	make check FC='wine fl32' FFLAGS='/4L72 /4Yb /4Yd /WX /4Yf /4Ys' OBIN='tests.exe' OFLAG='/Fetests.exe' ORUN='wine tests.exe' FPPFLAGS='-D__DP__' SRC='daphne.f90 tests.f90'
 	make clean
