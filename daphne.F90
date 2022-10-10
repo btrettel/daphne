@@ -70,7 +70,11 @@ module daphne
     ! `wp` stands for "working precision" in case I want to change
     ! the precision later. This is double precision for now.
     ! Quad precision: selected_real_kind(33, 4931)
+#ifndef double_precision
+    integer, public, parameter :: wp = selected_real_kind(33, 4931)
+#else
     integer, public, parameter :: wp = selected_real_kind(15, 307)
+#endif
     
     ! Kind number for integer used to count preals.
     !integer, parameter :: intk = selected_int_kind(4)
