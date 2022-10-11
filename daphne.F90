@@ -164,23 +164,26 @@ contains
     ! 7. Testing procedures
     ! ---------------------
     
-    __PURE__ subroutine check(condition, msg) !
+    __PURE__ subroutine check(condition, msg, filename, line_number) !
         ! Implementation of an assertion subroutine. Unlike in the
         ! stdlib, the message is required here.
         ! <https://stdlib.fortran-lang.org/page/specs/stdlib_error.html>
         ! TODO: Add (optional) file and line numbers to this.
         logical, intent(in) :: condition
         character(len=*), intent(in) :: msg
+        character(len=*), optional, intent(in) :: filename
+        integer, optional, intent(in) :: line_number
+        character(len=5) :: line_str
         
 #ifdef __NOTPURE__
         if (.not. condition) then
-            call error_stop(msg)
-            
-!            if (present(msg)) then
-!                call error_stop(msg)
-!            else
-!                call error_stop("Check failed.")
-!            end if
+            if (present(filename) .and. present(line_number)) then
+                write(unit=line_str, fmt="(I5.5)") line_number
+                call error_stop("("//filename//":"//line_str//&
+                                ") ERROR: "//msg)
+            else
+                call error_stop(msg)
+            end if
         end if
 #endif
         return
@@ -246,22 +249,22 @@ contains
         
 #ifdef __NOTPURE__
 !        call check(preal_in%preal_id > 0_intk, &
-!            msg="preal_id not greater than zero.")
+!            "preal_id not greater than zero.")
         
 !        call check(preal_in%preal_id <= number_of_preals, &
-!            msg="preal_id not less than or equal to the number of preals.")
+!            "preal_id not less than or equal to the number of preals.")
         
         call check(preal_in%stdev > 0.0_wp, &
-            msg="Standard deviation not greater than zero.")
+            "Standard deviation not greater than zero.")
         
 !        if (preal_in%lower_bound_set) then
 !            call check(preal_in%mean >= preal_in%lower_bound, &
-!                msg="Mean not greater than lower bound.")
+!                "Mean not greater than lower bound.")
 !        end if
         
 !        if (preal_in%upper_bound_set) then
 !            call check(preal_in%mean <= preal_in%upper_bound, &
-!                msg="Mean not less than upper bound.")
+!                "Mean not less than upper bound.")
 !        end if
 #endif
         return
@@ -295,7 +298,7 @@ contains
         
         if (present(rel_tol)) then
             call check(rel_tol >= 0.0_wp, &
-                msg="Set relative tolerance not zero or more.")
+                "Set relative tolerance not zero or more.")
             rel_tol_set = rel_tol
         else
             rel_tol_set = 10.0_wp**(-(real(prec, kind=wp) - 2.0_wp))
@@ -303,7 +306,7 @@ contains
         
         if (present(abs_tol)) then
             call check(abs_tol >= 0.0_wp, &
-                msg="Set absolute tolerance not zero or more.")
+                "Set absolute tolerance not zero or more.")
             abs_tol_set = abs_tol
         else
             abs_tol_set = 10.0_wp**(-(real(prec, kind=wp) - 2.0_wp))
@@ -314,7 +317,7 @@ contains
                 abs_tol_set)
         
         call check(tol > 0.0_wp, &
-                    msg="Tolerance not greater than zero.")
+                    "Tolerance not greater than zero.")
         
         if (abs(input_real_1 - input_real_2) < tol) then
             is_close_wp = .true.
@@ -475,10 +478,10 @@ contains
         ! dimensions.
         call check(lbound(preal_array_1, dim=1) == &
                     lbound(preal_array_2, dim=1), &
-                    msg="padd_array: lower array bound mismatch")
+                    "padd_array: lower array bound mismatch")
         call check(ubound(preal_array_1, dim=1) == &
                     ubound(preal_array_2, dim=1), &
-                    msg="padd_array: upper array bound mismatch")
+                    "padd_array: upper array bound mismatch")
         
         ! Allocate the output array.
         
@@ -506,10 +509,10 @@ contains
         ! dimensions.
         call check(lbound(preal_array_1, dim=1) == &
                     lbound(preal_array_2, dim=1), &
-                    msg="psubtract_array: lower array bound mismatch")
+                    "psubtract_array: lower array bound mismatch")
         call check(ubound(preal_array_1, dim=1) == &
                     ubound(preal_array_2, dim=1), &
-                    msg="psubtract_array: upper array bound mismatch")
+                    "psubtract_array: upper array bound mismatch")
         
         ! Allocate the output array.
         
@@ -537,10 +540,10 @@ contains
         ! dimensions.
         call check(lbound(preal_array_1, dim=1) == &
                     lbound(preal_array_2, dim=1), &
-                    msg="pmultiply_array: lower array bound mismatch")
+                    "pmultiply_array: lower array bound mismatch")
         call check(ubound(preal_array_1, dim=1) == &
                     ubound(preal_array_2, dim=1), &
-                    msg="pmultiply_array: upper array bound mismatch")
+                    "pmultiply_array: upper array bound mismatch")
         
         ! Allocate the output array.
         
@@ -568,10 +571,10 @@ contains
         ! dimensions.
         call check(lbound(preal_array_1, dim=1) == &
                     lbound(preal_array_2, dim=1), &
-                    msg="pdivide_array: lower array bound mismatch")
+                    "pdivide_array: lower array bound mismatch")
         call check(ubound(preal_array_1, dim=1) == &
                     ubound(preal_array_2, dim=1), &
-                    msg="pdivide_array: upper array bound mismatch")
+                    "pdivide_array: upper array bound mismatch")
         
         ! Allocate the output array.
         

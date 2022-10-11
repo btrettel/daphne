@@ -7,6 +7,7 @@
 # TODO: <https://github.com/llvm/llvm-project/tree/main/flang/#building-flang-standalone>
 # TODO: <http://fortranwiki.org/fortran/show/Debugging+tools>
 # TODO: <https://github.com/MetOffice/stylist>
+# TODO: Convert to FORTRAN 77 with FPT and then run ftnchek?
 
 FC       := gfortran
 FFLAGS   := -cpp -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f95 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-72
@@ -14,7 +15,7 @@ FPPFLAGS :=
 OBIN     := tests
 OFLAG    := -o $(OBIN)
 ORUN     := ./$(OBIN)
-SRC      := daphne.F90 tests.f90
+SRC      := daphne.F90 tests.F90
 SRC_FPP  := $(patsubst %.F90, %.f90,$(SRC))
 
 .PHONY: check
@@ -51,14 +52,14 @@ checkport: ## Run tests in many compilers
 
 .PHONY: clean
 clean: ## Remove compiled binaries and debugging files
-	rm -rfv daphne.f90 tests *.gcda *.gcno *.cmdx *.cmod *.ilm *.stb *.dbg *.o *.mod *.exe *.obj *.fpl *.FPT modtable.txt *.map *.exe *.mod *.obj *.lib *.s error.log
+	rm -rfv *.f90 tests *.gcda *.gcno *.cmdx *.cmod *.ilm *.stb *.dbg *.o *.mod *.exe *.obj *.fpl *.FPT modtable.txt *.map *.exe *.mod *.obj *.lib *.s error.log
 
 # This needs to be run on Ben Trettel's computer as I am using a custom YAML file for CERFACS flint and wrote a wrapper script to interpret the XML output by i-Code CNES.
 # FPT spacing warnings are suppressed because ELP90 wants `in out` to have a space, but FPT doesn't like that. I could also do `fpt $(SRC) %"suppress error 2185"`, but FPT prints a message that errors have been suppressed, and this does not. I prefer having cleaner output.
-lint: clean $(SRC_FPP) ## Run linters on Daphne
+lint: clean $(SRC_FPP) $(SRC) ## Run linters on Daphne
 	$(foreach source_file,$(SRC_FPP),echo ; echo $(source_file):; flint lint --flintrc /home/ben/.local/share/flint/fortran.yaml $(source_file);)
 	-icode-wrapper.py $(SRC_FPP)
-	fpt $(SRC_FPP) %"no warnings for spacing"
+	fpt $(SRC) %"no warnings for spacing"
 
 .PHONY: stats
 stats: ## Get some statistics for Daphne

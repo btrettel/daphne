@@ -6,12 +6,13 @@ Daphne is (will be) a Fortran library for rigorous data analysis in the physical
 
 Next steps:
 
-- Switch to preprocessor.
-    - Add (optional) file and line numbers to `check`.
-    - `__CHECK(` expands to `check(file="__FILE__", line="__LINE__",`
-        - This is perhaps the most important reason to use the preprocessor. I don't think it's possible otherwise to get the line numbers.
-    - Compile each file individually.
-    - Add preprocessor directive to get Git revision number so you can put it in the output.
+- Change `check` to `assert` and `CHECK` to `ASSERT`. Change all instances of `check` aside from its subroutine to be `CHECK` to get line numbers. Make `msg` the last argument of `check` to better handle multiple lines?
+    - Problem: [All preprocessor macros are limited to one line](https://gcc.gnu.org/onlinedocs/cpp/Newlines-in-Arguments.html). So perhaps the only way around this is to make the message a string variable and not worry about the length.
+- Switch to 132 characters per line to be less annoying?
+    - Is FL32 the only one with the 72 character limit? I could turn off the Fortran 90 compliance mode if that really does require 72 characters per line. I'm already getting standards compliance checking from multiple other compilers. Whatever benefit I'm getting from FL32's Fortran 90 mode presumably is small.
+    - Check if all compilers can take more than 132 characters. Check even `g95 -std=F`, as that might not enforce the 132 character limit in F.
+    - I recall that Intel's documentation says that they limit lines to 132 characters no matter what.
+- Create preprocessor header to have `ASSERT` macro, `__PURE__` macro logic, and Git revision number.
 - Move `logical_test`, `real_comparison_test`, and `tests_end` to tests.f90.
 - Make array operators work in 2D arrays.
 - Add tests for 2D arrays.

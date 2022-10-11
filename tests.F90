@@ -6,6 +6,8 @@
 ! Project: [Daphne](https://github.com/btrettel/daphne)
 ! License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
 
+#define CHECK(ARG1, ARG2) check(ARG1, ARG2, __FILE__, __LINE__)
+
 program tests
     ! Summary
     ! -------
@@ -49,7 +51,23 @@ program tests
     
     ! TODO: validate_preal
     ! TODO: validate_preal_array
-    ! TODO: test rel_tol setting
+    ! TODO: Test Git revision number.
+    
+    ! Check that my assertion macro to insert filenames and line
+    ! numbers works.
+    call CHECK(.true., "This is true.")
+    
+    call logical_test(.true., &
+        "logical test", &
+        number_of_failures)
+    
+    call logical_test(__FILE__ == "tests.F90", &
+        "preprocessor filename", &
+        number_of_failures)
+    
+    call logical_test(__LINE__ > 0, &
+        "preprocessor line number", &
+        number_of_failures)
     
     call logical_test(is_close_wp(1.0_wp, 1.0_wp), &
         "is_close_wp, identical numbers", &
@@ -61,12 +79,26 @@ program tests
     
     call logical_test(is_close_wp(1.0_wp, 1.05_wp, &
         abs_tol=0.1_wp, rel_tol=0.0_wp), &
-        "is_close_wp, close numbers with set eps, inside eps", &
+        "is_close_wp, close numbers with set abs_tol, "&
+            //"inside abs_tol", &
         number_of_failures)
     
     call logical_test(.not. is_close_wp(1.0_wp, 1.15_wp, &
         abs_tol=0.1_wp, rel_tol=0.0_wp), &
-        "is_close_wp, close numbers with set eps, outside eps", &
+        "is_close_wp, close numbers with set abs_tol, "&
+            //"outside abs_tol", &
+        number_of_failures)
+    
+    call logical_test(is_close_wp(1.0_wp, 1.05_wp, &
+        abs_tol=0.0_wp, rel_tol=0.1_wp), &
+        "is_close_wp, close numbers with set rel_tol, "&
+            //"inside rel_tol", &
+        number_of_failures)
+    
+    call logical_test(.not. is_close_wp(1.0_wp, 1.15_wp, &
+        abs_tol=0.0_wp, rel_tol=0.1_wp), &
+        "is_close_wp, close numbers with set rel_tol, "&
+            //"outside rel_tol", &
         number_of_failures)
 
     ! 4b. Constructor
