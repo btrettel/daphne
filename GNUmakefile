@@ -3,14 +3,12 @@
 # <https://innolitics.com/articles/make-delete-on-error/>
 .DELETE_ON_ERROR:
 
-# TODO: Convert source to C or C++ and compile that way as a portability test. Try multiple converters if possible.
+# TODO: Convert source to C or C++ and compile that way as a portability test. Try multiple converters if possible. `lfortran --show-cpp`
 # TODO: <https://github.com/llvm/llvm-project/tree/main/flang/#building-flang-standalone>
 # TODO: <http://fortranwiki.org/fortran/show/Debugging+tools>
-# TODO: <https://github.com/MetOffice/stylist>
-# TODO: Convert to FORTRAN 77 with FPT and then run ftnchek?
 
 FC       := gfortran
-FFLAGS   := -cpp -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f95 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-72
+FFLAGS   := -cpp -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f95 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-72 -fimplicit-none
 FPPFLAGS := 
 OBIN     := tests
 OFLAG    := -o $(OBIN)
@@ -32,7 +30,7 @@ check: tests ## Compile Daphne and run tests
 checkport: ## Run tests in many compilers
 	make check FC='wine elf90' FFLAGS='-npause' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' FPPFLAGS='-D__ELF90__ -D__DP__' SRC='daphne.f90 tests.f90'
 	make clean
-	make tests FC='g95' FFLAGS='-std=F -S' OFLAG='' FPPFLAGS='-D__PURE__=pure' SRC='daphne.f90 tests.f90'
+	make tests FC='g95' FFLAGS='-std=F -S' OFLAG='' FPPFLAGS='-D__F__' SRC='daphne.f90 tests.f90'
 	make clean
 	make check
 	make clean
@@ -49,6 +47,11 @@ checkport: ## Run tests in many compilers
 	make check FC='wine fl32' FFLAGS='/4L72 /4Yb /4Yd /WX /4Yf /4Ys' OBIN='tests.exe' OFLAG='/Fetests.exe' ORUN='wine tests.exe' FPPFLAGS='-D__DP__' SRC='daphne.f90 tests.f90'
 	make clean
 	@echo Tests on all compilers ran successfully.
+
+# lfortran
+# lfortran -c --cpp -D__DP__ -D__PURE__=pure daphne.F90 tests.F90
+# lfortran daphne.o tests.o
+# The second step is necessary because linking doesn't work in one step for some reason: <https://fortran-lang.discourse.group/t/lfortran-minimum-viable-product-mvp/1922/10>
 
 .PHONY: clean
 clean: ## Remove compiled binaries and debugging files
