@@ -6,6 +6,8 @@ Daphne is (will be) a Fortran library for rigorous data analysis in the physical
 
 Next steps:
 
+- Check in regex linter that format statements are lowercase. Change format statements in Daphne to be lowercase.
+- Figure out why FPT didn't like the function passing example you made.
 - Compile with lfortran.
     - Submit bug report for "semantic error: `unit` must be of type, Integer"
 - Make `use`, `public`, `private`, and `type` statements alphabetical. In each procedure section, alphabetize the procedures.
@@ -22,6 +24,9 @@ Next steps:
     - Check if all compilers can take more than 132 characters. Check even `g95 -std=F`, as that might not enforce the 132 character limit in F.
     - I recall that Intel's documentation says that they limit lines to 132 characters no matter what.
 - Create preprocessor header to have `ASSERT` macro, `__PURE__` macro logic, and Git revision number.
+- Error flags:
+    - Chapman p. 318: No `stop` in procedures. Set error flag instead.
+    - Maybe: Use preprocessor to ease checking statuses: `CALL(subroutine(...))` function to return `call subroutine(...); if status /= 0 error_stop("[...]")`?
 - Move `logical_test`, `real_comparison_test`, and `tests_end` to tests.f90 under `contains` for the `program`.
 - Make array operators work in 2D arrays.
 - Add tests for 2D arrays.
@@ -58,3 +63,14 @@ Portability is a major concern of mine when writing Daphne. As stated earlier, o
 
 - The way `error_print` writes to stderr is conventional but not standard and may not be fully portable. [A standard way to write to stderr was not available until Fortran 2003](https://stackoverflow.com/a/8508757/1124489), but the Oracle Fortran compiler does not implement this part of the standard. The value of `error_unit` in `error_print` may need to change depending on the compiler. The following compilers do not appear to write to stderr based on the default value of `error_unit` (0) in `error_print`:
     - Microsoft Fortran PowerStation 4.0 (The documentation does not mention any way to write to stderr, so this compiler may not be able to.)
+
+### Compilers Daphne has been tested with
+
+- gfortran 9.4.0
+- ifort 2021.6.0
+- ifx 2022.1.0
+- flang-7 7.0.1
+- Oracle Developer Studio 12.6 Fortran Compiler, version 8.8
+- Microsoft Fortran PowerStation 4.0a
+- Essential Lahey Fortran 90 4.00c
+- g95 with `--std=F`

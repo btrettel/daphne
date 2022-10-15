@@ -28,7 +28,7 @@ check: tests ## Compile Daphne and run tests
 # g95 and openf95 won't produce executables due to obsolete dependencies, but they will compile. That is why those compilers use `make tests` and not `make check`: `make tests` won't run the executable.
 .PHONY: checkport
 checkport: ## Run tests in many compilers
-	make check FC='wine elf90' FFLAGS='-npause' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' FPPFLAGS='-D__ELF90__ -D__DP__' SRC='daphne.f90 tests.f90'
+	make check FC='wine elf90' FFLAGS='-npause -fullwarn' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' FPPFLAGS='-D__ELF90__ -D__DP__' SRC='daphne.f90 tests.f90'
 	make clean
 	make tests FC='g95' FFLAGS='-std=F -S' OFLAG='' FPPFLAGS='-D__F__' SRC='daphne.f90 tests.f90'
 	make clean
@@ -48,7 +48,6 @@ checkport: ## Run tests in many compilers
 	make clean
 	@echo Tests on all compilers ran successfully.
 
-# lfortran
 # lfortran -c --cpp -D__DP__ -D__PURE__=pure daphne.F90 tests.F90
 # lfortran daphne.o tests.o
 # The second step is necessary because linking doesn't work in one step for some reason: <https://fortran-lang.discourse.group/t/lfortran-minimum-viable-product-mvp/1922/10>
@@ -69,6 +68,7 @@ stats: ## Get some statistics for Daphne
 	cloc $(SRC) --by-percent c
 
 tests: $(SRC)
+	./preal_checks.py tests.F90
 	$(FC) $(OFLAG) $(FFLAGS) $(SRC)
 
 %.f90: %.F90
