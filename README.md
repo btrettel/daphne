@@ -6,6 +6,7 @@ Daphne is (will be) a Fortran library for rigorous data analysis in the physical
 
 Next steps:
 
+- Change `check_flag` to have arguments for the filename and line number. Make the preprocessor macro `CHECK_FLAG` to automatically add the filename and line number like the `CHECK` macro does.
 - Check in regex linter that format statements are lowercase. Change format statements in Daphne to be lowercase.
 - Figure out why FPT didn't like the function passing example you made.
 - Compile with lfortran.

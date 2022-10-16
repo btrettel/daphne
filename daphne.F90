@@ -181,8 +181,7 @@ contains
         if (.not. condition) then
             if (present(filename) .and. present(line_number)) then
                 write(unit=line_str, fmt="(I5.5)") line_number
-                call error_stop("("//filename//":"//line_str//&
-                                ") ERROR: "//msg)
+                call error_stop("("//filename//":"//line_str//") ERROR: "//msg)
             else
                 call error_stop(msg)
             end if
@@ -230,8 +229,7 @@ contains
         
         integer :: i
         
-        open(unit=error_unit, file="error.log", &
-                status="replace", iostat=i, position="append")
+        open(unit=error_unit, file="error.log", status="replace", iostat=i, position="append")
         if (i /= 0) then
             write(unit=*, fmt=*) "Can't open error log."
             stop
@@ -250,23 +248,18 @@ contains
         type(preal), intent(in) :: preal_in
         
 #ifdef __NOTPURE__
-!        call check(preal_in%preal_id > 0_intk, &
-!            "preal_id not greater than zero.")
+!        call check(preal_in%preal_id > 0_intk, "preal_id not greater than zero.")
         
-!        call check(preal_in%preal_id <= number_of_preals, &
-!            "preal_id not less than or equal to the number of preals.")
+!        call check(preal_in%preal_id <= number_of_preals, "preal_id not less than or equal to the number of preals.")
         
-        call check(preal_in%stdev > 0.0_wp, &
-            "Standard deviation not greater than zero.")
+        call check(preal_in%stdev > 0.0_wp, "Standard deviation not greater than zero.")
         
 !        if (preal_in%lower_bound_set) then
-!            call check(preal_in%mean >= preal_in%lower_bound, &
-!                "Mean not greater than lower bound.")
+!            call check(preal_in%mean >= preal_in%lower_bound, "Mean not greater than lower bound.")
 !        end if
         
 !        if (preal_in%upper_bound_set) then
-!            call check(preal_in%mean <= preal_in%upper_bound, &
-!                "Mean not less than upper bound.")
+!            call check(preal_in%mean <= preal_in%upper_bound, "Mean not less than upper bound.")
 !        end if
 #endif
         return
@@ -279,8 +272,7 @@ contains
 #ifdef __NOTPURE__
         integer :: i
         
-        do i = lbound(preal_array_in, dim=1), &
-                ubound(preal_array_in, dim=1)
+        do i = lbound(preal_array_in, dim=1), ubound(preal_array_in, dim=1)
             call validate_preal(preal_array_in(i))
         end do
 #endif
@@ -299,27 +291,22 @@ contains
         prec = precision(input_real_1)
         
         if (present(rel_tol)) then
-            call check(rel_tol >= 0.0_wp, &
-                "Set relative tolerance not zero or more.")
+            call check(rel_tol >= 0.0_wp, "Set relative tolerance not zero or more.")
             rel_tol_set = rel_tol
         else
             rel_tol_set = 10.0_wp**(-(real(prec, kind=wp) - 2.0_wp))
         end if
         
         if (present(abs_tol)) then
-            call check(abs_tol >= 0.0_wp, &
-                "Set absolute tolerance not zero or more.")
+            call check(abs_tol >= 0.0_wp, "Set absolute tolerance not zero or more.")
             abs_tol_set = abs_tol
         else
             abs_tol_set = 10.0_wp**(-(real(prec, kind=wp) - 2.0_wp))
         end if
         
-        tol = max(rel_tol_set * abs(input_real_1), &
-                rel_tol_set * abs(input_real_2), &
-                abs_tol_set)
+        tol = max(rel_tol_set * abs(input_real_1), rel_tol_set * abs(input_real_2), abs_tol_set)
         
-        call check(tol > 0.0_wp, &
-                    "Tolerance not greater than zero.")
+        call check(tol > 0.0_wp, "Tolerance not greater than zero.")
         
         if (abs(input_real_1 - input_real_2) < tol) then
             is_close_wp = .true.
@@ -346,8 +333,7 @@ contains
         return
     end subroutine logical_test
     
-    subroutine real_comparison_test(program_real, expected_real, &
-                msg, number_of_failures) !
+    subroutine real_comparison_test(program_real, expected_real, msg, number_of_failures) !
         ! Check whether two reals are close, increase
         ! number_of_failures if false.
         
@@ -357,11 +343,8 @@ contains
         
         write(unit=*, fmt=*) "  returned:", program_real
         write(unit=*, fmt=*) "  expected:", expected_real
-        write(unit=*, fmt=*) "difference:", &
-                        abs(program_real - expected_real)
-        call logical_test(is_close_wp(program_real, expected_real), &
-            msg, &
-            number_of_failures)
+        write(unit=*, fmt=*) "difference:", abs(program_real - expected_real)
+        call logical_test(is_close_wp(program_real, expected_real), msg, number_of_failures)
         return
     end subroutine real_comparison_test
     
@@ -467,8 +450,7 @@ contains
     ! 9b. preal arrays
     ! ----------------
     
-    function padd_array(preal_array_1, preal_array_2) &
-            result(preal_array_out) !
+    function padd_array(preal_array_1, preal_array_2) result(preal_array_out) !
         ! Adds two preal arrays.
         
         type(preal), dimension(:), intent(in) :: preal_array_1
@@ -478,12 +460,8 @@ contains
         
         ! Check that preal_array_1 and preal_array_1 have the same
         ! dimensions.
-        call check(lbound(preal_array_1, dim=1) == &
-                    lbound(preal_array_2, dim=1), &
-                    "padd_array: lower array bound mismatch")
-        call check(ubound(preal_array_1, dim=1) == &
-                    ubound(preal_array_2, dim=1), &
-                    "padd_array: upper array bound mismatch")
+        call check(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "padd_array: lower array bound mismatch")
+        call check(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "padd_array: upper array bound mismatch")
         
         ! Allocate the output array.
         
@@ -498,8 +476,7 @@ contains
         return
     end function padd_array
     
-    function psubtract_array(preal_array_1, preal_array_2) &
-            result(preal_array_out) !
+    function psubtract_array(preal_array_1, preal_array_2) result(preal_array_out) !
         ! Subtracts two preal arrays.
         
         type(preal), dimension(:), intent(in) :: preal_array_1
@@ -509,12 +486,8 @@ contains
         
         ! Check that preal_array_1 and preal_array_1 have the same
         ! dimensions.
-        call check(lbound(preal_array_1, dim=1) == &
-                    lbound(preal_array_2, dim=1), &
-                    "psubtract_array: lower array bound mismatch")
-        call check(ubound(preal_array_1, dim=1) == &
-                    ubound(preal_array_2, dim=1), &
-                    "psubtract_array: upper array bound mismatch")
+        call check(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "psubtract_array: lower array bound mismatch")
+        call check(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "psubtract_array: upper array bound mismatch")
         
         ! Allocate the output array.
         
@@ -529,8 +502,7 @@ contains
         return
     end function psubtract_array
     
-    function pmultiply_array(preal_array_1, preal_array_2) &
-            result(preal_array_out) !
+    function pmultiply_array(preal_array_1, preal_array_2) result(preal_array_out) !
         ! Multiplies two preal arrays.
         
         type(preal), dimension(:), intent(in) :: preal_array_1
@@ -540,12 +512,8 @@ contains
         
         ! Check that preal_array_1 and preal_array_1 have the same
         ! dimensions.
-        call check(lbound(preal_array_1, dim=1) == &
-                    lbound(preal_array_2, dim=1), &
-                    "pmultiply_array: lower array bound mismatch")
-        call check(ubound(preal_array_1, dim=1) == &
-                    ubound(preal_array_2, dim=1), &
-                    "pmultiply_array: upper array bound mismatch")
+        call check(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "pmultiply_array: lower array bound mismatch")
+        call check(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "pmultiply_array: upper array bound mismatch")
         
         ! Allocate the output array.
         
@@ -560,8 +528,7 @@ contains
         return
     end function pmultiply_array
     
-    function pdivide_array(preal_array_1, preal_array_2) &
-            result(preal_array_out) !
+    function pdivide_array(preal_array_1, preal_array_2) result(preal_array_out) !
         ! Divides two preal arrays.
         
         type(preal), dimension(:), intent(in) :: preal_array_1
@@ -571,12 +538,8 @@ contains
         
         ! Check that preal_array_1 and preal_array_1 have the same
         ! dimensions.
-        call check(lbound(preal_array_1, dim=1) == &
-                    lbound(preal_array_2, dim=1), &
-                    "pdivide_array: lower array bound mismatch")
-        call check(ubound(preal_array_1, dim=1) == &
-                    ubound(preal_array_2, dim=1), &
-                    "pdivide_array: upper array bound mismatch")
+        call check(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "pdivide_array: lower array bound mismatch")
+        call check(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "pdivide_array: upper array bound mismatch")
         
         ! Allocate the output array.
         
