@@ -72,6 +72,8 @@ Portability is a major concern of mine when writing Daphne. As stated earlier, o
 - ifx 2022.1.0
 - flang-7 7.0.1
 - Oracle Developer Studio 12.6 Fortran Compiler, version 8.8
-- Microsoft Fortran PowerStation 4.0a
-- Essential Lahey Fortran 90 4.00c
+- Microsoft Fortran PowerStation 4.0a (Win32 in Wine)
+- Essential Lahey Fortran 90 4.00c (Win32 in Wine)
 - g95 with `--std=F`
+- openf95 5.0
+- Absoft Pro Fortran 7.0 (Win32 in Wine)

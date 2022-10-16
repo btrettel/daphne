@@ -15,35 +15,30 @@ ORUN     := ./$(OBIN)
 SRC      := daphne.F90 tests.F90
 SRC_FPP  := $(patsubst %.F90, %.f90,$(SRC))
 
+# gfortran, ELF90, g95 -std=F, ifort, ifx, flang-7, sunf95 (Oracle), FL32 (Microsoft Fortran PowerStation 4.0)
+# ELF90 is second as it is hard to satisfy.
+# `g95 -std=F` is third as it is also hard to satisfy.
 .PHONY: check
-check: tests ## Compile Daphne and run tests
-	$(ORUN)
-	@echo Tests on $(FC) ran successfully.
-
-# ELF90, gfortran, ifort, ifx, flang-7, sunf95 (Oracle), FL32 (Microsoft Fortran PowerStation 4.0)
-# The reason why ELF90 has the test command is because ELF90 can't return a non-zero exit code. So instead I check for an error file, which, if present, indicates an error.
-# ELF90 is first as it is hard to satisfy.
-# `g95 -std=F` is second as it is also hard to satisfy.
-# g95 and openf95 won't produce executables due to obsolete dependencies, but they will compile. That is why those compilers use `make tests` and not `make check`: `make tests` won't run the executable.
-.PHONY: checkport
-checkport: ## Run tests in many compilers
-	make check FC='wine elf90' FFLAGS='-npause -fullwarn' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' FPPFLAGS='-D__ELF90__ -D__DP__' SRC='daphne.f90 tests.f90'
+check: ## Compile Daphne and run tests in many compilers
+	make gfortran
 	make clean
-	make tests FC='g95' FFLAGS='-std=F -S' OFLAG='' FPPFLAGS='-D__F__' SRC='daphne.f90 tests.f90'
+	make elf90
 	make clean
-	make check
+	make g95
 	make clean
-	make check FC=ifort FFLAGS='-fpp -warn errors -check all -warn all -diag-error=remark,warn,error -O0 -g -traceback -fpe0 -fltconsistency -stand:f90 -debug full -diag-error-limit=1'
+	make ifort
 	make clean
-	make check FC=ifx FFLAGS='-fpp -warn errors -warn all -diag-error=remark,warn,error -O0 -g -traceback -fpe0 -fltconsistency -stand:f95 -debug full -diag-error-limit=1'
+	make ifx
 	make clean
-	make check FC=flang-7 FFLAGS='-cpp -D__DP__ -g -Wdeprecated'
+	make flang-7
 	make clean
-	make check FC=sunf95 FFLAGS='-fpp -g -w4 -errwarn=%all -e -fnonstd -stackvar -ansi -C -fpover -xcheck=%all -U'
+	make sunf95
 	make clean
-	make tests FC=openf95 FFLAGS='-c -D__DP__ -fullwarn -col72 -Wuninitialized'
+	make openf95
 	make clean
-	make check FC='wine fl32' FFLAGS='/4L132 /4Yb /4Yd /WX /4Yf' OBIN='tests.exe' OFLAG='/Fetests.exe' ORUN='wine tests.exe' FPPFLAGS='-D__DP__' SRC='daphne.f90 tests.f90'
+	make fl32
+	make clean
+	make absoft
 	make clean
 	@echo Tests on all compilers ran successfully.
 
@@ -51,7 +46,53 @@ checkport: ## Run tests in many compilers
 # lfortran daphne.o tests.o
 # The second step is necessary because linking doesn't work in one step for some reason: <https://fortran-lang.discourse.group/t/lfortran-minimum-viable-product-mvp/1922/10>
 
-# wine f95 -en -ea -Rb -Rc -Rs -Rp hello.f90
+.PHONY: checkone
+checkone: tests
+	$(ORUN)
+	@echo Tests on $(FC) ran successfully.
+
+# The reason why ELF90 has the test command is because ELF90 can't return a non-zero exit code. So instead I check for an error file, which, if present, indicates an error.
+.PHONY: elf90
+elf90: ## Compile Daphne and run tests for ELF90
+	make checkone FC='wine elf90' FFLAGS='-npause -fullwarn' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' FPPFLAGS='-D__ELF90__ -D__DP__' SRC='daphne.f90 tests.f90'
+
+# g95 and openf95 won't produce executables due to obsolete dependencies, but they will compile. That is why those compilers use `make tests` and not `make checkone`: `make tests` won't run the executable.
+.PHONY: g95
+g95: ## Compile Daphne and run tests for g95 -std=F
+	make tests FC='g95' FFLAGS='-std=F -S' OFLAG='' FPPFLAGS='-D__F__' SRC='daphne.f90 tests.f90'
+
+.PHONY: gfortran
+gfortran: ## Compile Daphne and run tests for gfortran
+	make checkone
+
+.PHONY: ifort
+ifort: ## Compile Daphne and run tests for ifort
+	make checkone FC=ifort FFLAGS='-fpp -warn errors -check all -warn all -diag-error=remark,warn,error -O0 -g -traceback -fpe0 -fltconsistency -stand:f90 -debug full -diag-error-limit=1'
+
+.PHONY: ifx
+ifx: ## Compile Daphne and run tests for ifx
+	make checkone FC=ifx FFLAGS='-fpp -warn errors -warn all -diag-error=remark,warn,error -O0 -g -traceback -fpe0 -fltconsistency -stand:f95 -debug full -diag-error-limit=1'
+
+.PHONY: flang-7
+flang-7: ## Compile Daphne and run tests for flang-7
+	make checkone FC=flang-7 FFLAGS='-cpp -D__DP__ -g -Wdeprecated'
+
+.PHONY: sunf95
+sunf95: ## Compile Daphne and run tests for sunf95
+	make checkone FC=sunf95 FFLAGS='-fpp -g -w4 -errwarn=%all -e -fnonstd -stackvar -ansi -C -fpover -xcheck=%all -U'
+
+# See comment above about g95 for why this is `make tests` and not `make checkone`.
+.PHONY: openf95
+openf95: ## Compile Daphne and run tests for openf95
+	make tests FC=openf95 FFLAGS='-c -D__DP__ -fullwarn -col72 -Wuninitialized'
+
+.PHONY: fl32
+fl32: ## Compile Daphne and run tests for fl32
+	make checkone FC='wine fl32' FFLAGS='/4L132 /4Yb /4Yd /WX /4Yf' OBIN='tests.exe' OFLAG='/Fetests.exe' ORUN='wine tests.exe' FPPFLAGS='-D__DP__' SRC='daphne.f90 tests.f90'
+
+.PHONY: absoft
+absoft: ## Compile Daphne and run tests for fl32
+	make checkone FC='wine f95' FFLAGS='-en -ea -Rb -Rc -Rs -Rp' OBIN='tests.exe' OFLAG='-o tests.exe' ORUN='wine tests.exe' FPPFLAGS='-D__DP__' SRC='daphne.f90 tests.f90'
 
 .PHONY: clean
 clean: ## Remove compiled binaries and debugging files
