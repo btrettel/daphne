@@ -56,6 +56,14 @@ checkone: tests
 elf90: ## Compile Daphne and run tests for ELF90
 	make checkone FC='wine elf90' FFLAGS='-npause -fullwarn' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' FPPFLAGS='-D__ELF90__ -D__DP__' SRC='daphne.f90 tests.f90'
 
+# To run in DOSBox as of 2022-10-16, you need to copy the following to the same directory as tests.exe:
+# /home/ben/.wine/drive_c/ELF9040/Bin/dosstyle.dll
+# /home/ben/.wine/drive_c/ELF9040/Bin/tnt.exe
+# /home/ben/.wine/drive_c/ELF9040/Bin/vmm.exp
+.PHONY: elf90_dos
+elf90_dos: ## Compile Daphne for ELF90 in DOS
+	make tests FC='wine elf90' FFLAGS='-npause -fullwarn -nwin' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' FPPFLAGS='-D__ELF90__ -D__DP__' SRC='daphne.f90 tests.f90'
+
 # g95 and openf95 won't produce executables due to obsolete dependencies, but they will compile. That is why those compilers use `make tests` and not `make checkone`: `make tests` won't run the executable.
 .PHONY: g95
 g95: ## Compile Daphne and run tests for g95 -std=F
@@ -113,7 +121,7 @@ tests: $(SRC)
 	#./preal_checks.py tests.F90
 	$(FC) $(OFLAG) $(FFLAGS) $(SRC)
 
-%.f90: %.F90
+%.f90: %.F90 daphne_header.F90
 	gfortran -E $(FPPFLAGS) $< | grep -v '^#' > $@
 
 # <https://www.thapaliya.com/en/writings/well-documented-makefiles/>

@@ -6,12 +6,7 @@
 ! Project: [Daphne](https://github.com/btrettel/daphne)
 ! License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
 
-#ifndef __F__
-#define __PURE__
-#define __NOTPURE__
-#else
-#define __PURE__ pure
-#endif
+#include "daphne_header.F90"
 
 module daphne
     ! Summary

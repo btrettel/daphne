@@ -6,7 +6,7 @@
 ! Project: [Daphne](https://github.com/btrettel/daphne)
 ! License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
 
-#define CHECK(ARG1, ARG2) check(ARG1, ARG2, __FILE__, __LINE__)
+#include "daphne_header.F90"
 
 program tests
     ! Summary
