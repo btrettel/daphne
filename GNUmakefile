@@ -121,7 +121,7 @@ tests: $(SRC)
 	#./preal_checks.py tests.F90
 	$(FC) $(OFLAG) $(FFLAGS) $(SRC)
 
-%.f90: %.F90 daphne_header.F90
+%.f90: %.F90 header.F90
 	gfortran -E $(FPPFLAGS) $< | grep -v '^#' > $@
 
 # <https://www.thapaliya.com/en/writings/well-documented-makefiles/>

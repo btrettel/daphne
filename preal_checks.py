@@ -55,9 +55,9 @@ for filename in filename_list:
                     for line_variable in line_variable_list:
                         variable_set.add(line_variable.strip())
             
-            if line.startswith("call check_flag("):
-                end_index = line.index(")")
-                check_set.add(line[16:end_index])
+            if line.startswith("call CHECK_FLAG("):
+                end_index = line.index(",")
+                check_set.add(line[16:end_index].strip())
             
             # advance line
             line = f.readline()

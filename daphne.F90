@@ -6,7 +6,7 @@
 ! Project: [Daphne](https://github.com/btrettel/daphne)
 ! License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
 
-#include "daphne_header.F90"
+#include "header.F90"
 
 module daphne
     ! Summary
@@ -55,7 +55,7 @@ module daphne
     ! 2. Declare public procedures and operators
     ! ------------------------------------------
     
-    public :: check
+    public :: assert
     public :: error_stop
     public :: error_print
     public :: is_close_wp
@@ -161,7 +161,7 @@ contains
     ! 7. Testing procedures
     ! ---------------------
     
-    __PURE__ subroutine check(condition, msg, filename, line_number) !
+    __PURE__ subroutine assert(condition, msg, filename, line_number) !
         ! Implementation of an assertion subroutine. Unlike in the
         ! stdlib, the message is required here.
         ! <https://stdlib.fortran-lang.org/page/specs/stdlib_error.html>
@@ -173,17 +173,17 @@ contains
         character(len=5) :: line_str
         
 #ifdef __NOTPURE__
-        if (.not. condition) then
-            if (present(filename) .and. present(line_number)) then
+        __OUTERc__ if (.not. condition) then
+            __INNERc__ if (present(filename) .and. present(line_number)) then
                 write(unit=line_str, fmt="(I5.5)") line_number
                 call error_stop("("//filename//":"//line_str//") ERROR: "//msg)
             else
                 call error_stop(msg)
-            end if
-        end if
+            end if __INNER__
+        end if __OUTER__
 #endif
         return
-    end subroutine check
+    end subroutine assert
     
     __PURE__ subroutine error_stop(msg) !
         ! Stops execution and prints error message.
@@ -243,18 +243,18 @@ contains
         type(preal), intent(in) :: preal_in
         
 #ifdef __NOTPURE__
-!        call check(preal_in%preal_id > 0_intk, "preal_id not greater than zero.")
+!        call assert(preal_in%preal_id > 0_intk, "preal_id not greater than zero.")
         
-!        call check(preal_in%preal_id <= number_of_preals, "preal_id not less than or equal to the number of preals.")
+!        call assert(preal_in%preal_id <= number_of_preals, "preal_id not less than or equal to the number of preals.")
         
-        call check(preal_in%stdev > 0.0_wp, "Standard deviation not greater than zero.")
+        call assert(preal_in%stdev > 0.0_wp, "Standard deviation not greater than zero.")
         
 !        if (preal_in%lower_bound_set) then
-!            call check(preal_in%mean >= preal_in%lower_bound, "Mean not greater than lower bound.")
+!            call assert(preal_in%mean >= preal_in%lower_bound, "Mean not greater than lower bound.")
 !        end if
         
 !        if (preal_in%upper_bound_set) then
-!            call check(preal_in%mean <= preal_in%upper_bound, "Mean not less than upper bound.")
+!            call assert(preal_in%mean <= preal_in%upper_bound, "Mean not less than upper bound.")
 !        end if
 #endif
         return
@@ -286,14 +286,14 @@ contains
         prec = precision(input_real_1)
         
         if (present(rel_tol)) then
-            call check(rel_tol >= 0.0_wp, "Set relative tolerance not zero or more.")
+            call assert(rel_tol >= 0.0_wp, "Set relative tolerance not zero or more.")
             rel_tol_set = rel_tol
         else
             rel_tol_set = 10.0_wp**(-(real(prec, kind=wp) - 2.0_wp))
         end if
         
         if (present(abs_tol)) then
-            call check(abs_tol >= 0.0_wp, "Set absolute tolerance not zero or more.")
+            call assert(abs_tol >= 0.0_wp, "Set absolute tolerance not zero or more.")
             abs_tol_set = abs_tol
         else
             abs_tol_set = 10.0_wp**(-(real(prec, kind=wp) - 2.0_wp))
@@ -301,7 +301,7 @@ contains
         
         tol = max(rel_tol_set * abs(input_real_1), rel_tol_set * abs(input_real_2), abs_tol_set)
         
-        call check(tol > 0.0_wp, "Tolerance not greater than zero.")
+        call assert(tol > 0.0_wp, "Tolerance not greater than zero.")
         
         if (abs(input_real_1 - input_real_2) < tol) then
             is_close_wp = .true.
@@ -455,8 +455,8 @@ contains
         
         ! Check that preal_array_1 and preal_array_1 have the same
         ! dimensions.
-        call check(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "padd_array: lower array bound mismatch")
-        call check(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "padd_array: upper array bound mismatch")
+        call assert(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "padd_array: lower array bound mismatch")
+        call assert(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "padd_array: upper array bound mismatch")
         
         ! Allocate the output array.
         
@@ -481,8 +481,8 @@ contains
         
         ! Check that preal_array_1 and preal_array_1 have the same
         ! dimensions.
-        call check(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "psubtract_array: lower array bound mismatch")
-        call check(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "psubtract_array: upper array bound mismatch")
+        call assert(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "psubtract_array: lower array bound mismatch")
+        call assert(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "psubtract_array: upper array bound mismatch")
         
         ! Allocate the output array.
         
@@ -507,8 +507,8 @@ contains
         
         ! Check that preal_array_1 and preal_array_1 have the same
         ! dimensions.
-        call check(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "pmultiply_array: lower array bound mismatch")
-        call check(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "pmultiply_array: upper array bound mismatch")
+        call assert(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "pmultiply_array: lower array bound mismatch")
+        call assert(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "pmultiply_array: upper array bound mismatch")
         
         ! Allocate the output array.
         
@@ -533,8 +533,8 @@ contains
         
         ! Check that preal_array_1 and preal_array_1 have the same
         ! dimensions.
-        call check(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "pdivide_array: lower array bound mismatch")
-        call check(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "pdivide_array: upper array bound mismatch")
+        call assert(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "pdivide_array: lower array bound mismatch")
+        call assert(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "pdivide_array: upper array bound mismatch")
         
         ! Allocate the output array.
         

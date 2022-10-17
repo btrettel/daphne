@@ -6,7 +6,7 @@
 ! Project: [Daphne](https://github.com/btrettel/daphne)
 ! License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
 
-#include "daphne_header.F90"
+#include "header.F90"
 
 program tests
     ! Summary
@@ -55,7 +55,7 @@ program tests
     
     ! Check that my assertion macro to insert filenames and line
     ! numbers works.
-    call CHECK(.true., "This is true.")
+    call ASSERT(.true., "This is true.")
     
     call logical_test(.true., "logical test", number_of_failures)
     

@@ -6,28 +6,15 @@ Daphne is (will be) a Fortran library for rigorous data analysis in the physical
 
 Next steps:
 
-- Change `check_flag` to have arguments for the filename and line number. Make the preprocessor macro `CHECK_FLAG` to automatically add the filename and line number like the `CHECK` macro does.
+- Add subroutine `check_flag(preal_input, filename, line_number)` to have arguments for the filename and line number.
 - Check in regex linter that format statements are lowercase. Change format statements in Daphne to be lowercase.
 - Figure out why FPT didn't like the function passing example you made.
-- Compile with lfortran.
-    - Submit bug report for "semantic error: `unit` must be of type, Integer"
-- Make `use`, `public`, `private`, and `type` statements alphabetical. In each procedure section, alphabetize the procedures.
+- Alphabetize `use`, `public`, `private`, and `type` statements. In each procedure section, alphabetize the procedures.
 - Add multiple tests that are expected to fail.
-    - `check(.false., [...])`
+    - `assert(.false., [...])`
     - `error_stop([...])`
 - How can the `intent` be indicated if I pass in a function into a procedure and use an `interface` block to make the function explicit and not `external`? `intent` statement?
-- `__OUTER:__`, `__MIDDLE:__`, `__INNER:__`, `__OUTER__`, `__MIDDLE__`, `__INNER__`
-- Change `check` to `assert` and `CHECK` to `ASSERT`. Change all instances of `check` aside from its subroutine to be `CHECK` to get line numbers. Make `msg` the last argument of `check` to better handle multiple lines?
-    - Problem: [All preprocessor macros are limited to one line](https://gcc.gnu.org/onlinedocs/cpp/Newlines-in-Arguments.html). So perhaps the only way around this is to make the message a string variable and not worry about the length.
-- Switch to 132 characters per line to be less annoying?
-    - This would make the `ASSERT` macro safer as I'd be much less likely to make the line too long.
-    - Is FL32 the only one with the 72 character limit? I could turn off the Fortran 90 compliance mode if that really does require 72 characters per line. I'm already getting standards compliance checking from multiple other compilers. Whatever benefit I'm getting from FL32's Fortran 90 mode presumably is small.
-    - Check if all compilers can take more than 132 characters. Check even `g95 -std=F`, as that might not enforce the 132 character limit in F.
-    - I recall that Intel's documentation says that they limit lines to 132 characters no matter what.
-- Create preprocessor header to have `ASSERT` macro, `__PURE__` macro logic, and Git revision number.
-- Error flags:
-    - Chapman p. 318: No `stop` in procedures. Set error flag instead.
-    - Maybe: Use preprocessor to ease checking statuses: `CALL(subroutine(...))` function to return `call subroutine(...); if status /= 0 error_stop("[...]")`?
+- Add Git revision number as preprocessor command in compiler flags GNUmakefile.
 - Move `logical_test`, `real_comparison_test`, and `tests_end` to tests.f90 under `contains` for the `program`.
 - Make array operators work in 2D arrays.
 - Add tests for 2D arrays.
