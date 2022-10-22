@@ -313,9 +313,9 @@ contains
         character(len=*), intent(in) :: msg
         integer(kind=i5), intent(in out) :: number_of_failures
         
-        write(unit=*, fmt=*) "  returned:", program_real
-        write(unit=*, fmt=*) "  expected:", expected_real
-        write(unit=*, fmt=*) "difference:", abs(program_real - expected_real)
+        write(unit=*, fmt="(a, es15.8)") "  returned:", program_real
+        write(unit=*, fmt="(a, es15.8)") "  expected:", expected_real
+        write(unit=*, fmt="(a, es15.8)") "difference:", abs(program_real - expected_real)
         call logical_test(is_close_wp(program_real, expected_real), msg, number_of_failures)
         return
     end subroutine real_equality_test
@@ -327,9 +327,9 @@ contains
         character(len=*), intent(in) :: msg
         integer(kind=i5), intent(in out) :: number_of_failures
         
-        write(unit=*, fmt=*) "  returned:", program_real
-        write(unit=*, fmt=*) "  expected:", expected_real
-        write(unit=*, fmt=*) "difference:", abs(program_real - expected_real)
+        write(unit=*, fmt="(a, e15.8)") "  returned:", program_real
+        write(unit=*, fmt="(a, es15.8)") "  expected:", expected_real
+        write(unit=*, fmt="(a, es15.8)") "difference:", abs(program_real - expected_real)
         call logical_test(.not. is_close_wp(program_real, expected_real), msg, number_of_failures)
         return
     end subroutine real_inequality_test

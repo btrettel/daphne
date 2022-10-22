@@ -14,6 +14,7 @@ OFLAG    := -o $(OBIN)
 ORUN     := ./$(OBIN)
 SRC      := daphne.F90 tests.F90
 SRC_FPP  := $(patsubst %.F90, %.f90,$(SRC))
+COVERAGE := $(patsubst %.F90, %.gcda,$(SRC))
 
 # gfortran, ELF90, g95 -std=F, ifort, ifx, flang-7, sunf95 (Oracle), FL32 (Microsoft Fortran PowerStation 4.0)
 # ELF90 is second as it is hard to satisfy.
@@ -74,6 +75,9 @@ g95: ## Compile Daphne and run tests for g95 -std=F
 .PHONY: gfortran
 gfortran: ## Compile Daphne and run tests for gfortran
 	make checkone
+
+$(COVERAGE):
+	make gfortran
 
 .PHONY: ifort
 ifort: ## Compile Daphne and run tests for ifort
@@ -139,7 +143,7 @@ ftn95: $(SRC_FPP) ## Compile Daphne and run tests for ftn95
 
 .PHONY: clean
 clean: ## Remove compiled binaries and debugging files
-	rm -rfv *.cmdx *.cmod *.d *.dbg *.ERR error.log *.exe *.EXE *.f90 *.f95 *.FPI *.fpl *.FPT *.gcda *.gcno *.ilm *.lib *.map *.mod *.MOD modtable.txt *.o *.obj *.pc *.pcl *.s *.stb tests
+	rm -rfv *.cmdx *.cmod *.d *.dbg *.ERR error.log *.exe *.EXE *.f90 *.f95 *.FPI *.fpl *.FPT *.gcda *.gcno *.gcov html-cov/ *.ilm lcov.info *.lib *.map *.mod *.MOD modtable.txt *.o *.obj *.pc *.pcl *.s *.stb tests
 
 # This needs to be run on Ben Trettel's computer as I am using a custom YAML file for CERFACS flint and wrote a wrapper script to interpret the XML output by i-Code CNES.
 # FPT spacing warnings are suppressed because ELP90 wants `in out` to have a space, but FPT doesn't like that. FPT prints a message that errors have been suppressed. That's somewhat annoying. Using `%"no warnings for spacing"` instead doesn't have that message. I prefer having cleaner output. I used that approach for a while until I ran into another problem that FPT doesn't like and I had to disable that message too.
@@ -147,7 +151,7 @@ clean: ## Remove compiled binaries and debugging files
 lint: $(SRC_FPP) $(SRC) ## Run linters on Daphne
 	$(foreach source_file,$(SRC_FPP),echo ; echo $(source_file):; flint lint --flintrc /home/ben/.local/share/flint/fortran.yaml $(source_file);)
 	-icode-wrapper.py $(SRC_FPP)
-	rm *.FPT *.FPI *.fpl
+	rm -fv *.FPT *.FPI *.fpl
 	fpt $(SRC) %"suppress error 2185 3425 3437"
 
 .PHONY: stats
@@ -160,6 +164,12 @@ tests: $(SRC)
 
 %.f90: %.F90 header.F90
 	gfortran -E $(FPPFLAGS) $< | grep -v '^#' > $@
+
+.PHONY: coverage
+coverage: $(COVERAGE)
+	gcov $(SRC)
+	lcov --directory . --capture --output-file lcov.info
+	genhtml -t "Daphne" -o html-cov ./lcov.info
 
 # <https://www.thapaliya.com/en/writings/well-documented-makefiles/>
 # This should not be the first target. Place at the end.
