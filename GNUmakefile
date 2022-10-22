@@ -40,9 +40,13 @@ check: ## Compile Daphne and run tests in many compilers
 	make clean
 	make absoft
 	make clean
+	make ifl
+	make clean
+	#make cvf
+	#make clean
 	@echo Tests on all compilers ran successfully.
 
-# lfortran -c --cpp -D__DP__ -D__PURE__=pure daphne.F90 tests.F90
+# lfortran -c --cpp -D__DP__ -D__F__ daphne.F90 tests.F90
 # lfortran daphne.o tests.o
 # The second step is necessary because linking doesn't work in one step for some reason: <https://fortran-lang.discourse.group/t/lfortran-minimum-viable-product-mvp/1922/10>
 
@@ -99,19 +103,31 @@ fl32: ## Compile Daphne and run tests for fl32
 	make checkone FC='wine fl32' FFLAGS='/4L132 /4Yb /4Yd /WX /4Yf' OBIN='tests.exe' OFLAG='/Fetests.exe' ORUN='wine tests.exe' FPPFLAGS='-D__DP__' SRC='daphne.f90 tests.f90'
 
 .PHONY: absoft
-absoft: ## Compile Daphne and run tests for fl32
+absoft: ## Compile Daphne and run tests for absoft
 	make checkone FC='wine f95' FFLAGS='-en -ea -Rb -Rc -Rs -Rp' OBIN='tests.exe' OFLAG='-o tests.exe' ORUN='wine tests.exe' FPPFLAGS='-D__DP__' SRC='daphne.f90 tests.f90'
+
+# Using the ifl preprocessor causes Wine to crash. `FFLAGS='/Qfpp /D__DP__'`
+# /d1 or /d2 seem to cause ifl to crash.
+# Using /CV (or /4Yb or /C as those enable /CV) causes an "** Address Error **" at runtime.
+.PHONY: ifl
+ifl: ## Compile Daphne and run tests for ifl
+	make checkone FC='wine ifl' FFLAGS='/CA /CB /CS /CU /4Yd /4Ys' OBIN='tests.exe' OFLAG='/Fetests.exe' ORUN='wine tests.exe' FPPFLAGS='-D__DP__' SRC='daphne.f90 tests.f90'
+
+# Using the cvf preprocessor causes Wine to crash. /fpp:"__DP__"
+.PHONY: cvf
+cvf: ## Compile Daphne and run tests for cvf
+	make checkone FC='wine f90' FFLAGS='/check:all /stand:f90 /warn:all' OBIN='tests.exe' OFLAG='/exe:tests.exe' ORUN='wine tests.exe' FPPFLAGS='-D__DP__' SRC='daphne.f90 tests.f90'
 
 .PHONY: clean
 clean: ## Remove compiled binaries and debugging files
-	rm -rfv *.f90 tests *.gcda *.gcno *.cmdx *.cmod *.ilm *.stb *.dbg *.o *.mod *.exe *.obj *.fpl *.FPT modtable.txt *.map *.exe *.mod *.obj *.lib *.s error.log
+	rm -rfv *.f90 tests *.gcda *.gcno *.cmdx *.cmod *.ilm *.stb *.dbg *.o *.mod *.exe *.obj *.fpl *.FPT modtable.txt *.map *.exe *.mod *.obj *.lib *.s error.log *.FPI *.pc *.pcl *.d
 
 # This needs to be run on Ben Trettel's computer as I am using a custom YAML file for CERFACS flint and wrote a wrapper script to interpret the XML output by i-Code CNES.
-# FPT spacing warnings are suppressed because ELP90 wants `in out` to have a space, but FPT doesn't like that. I could also do `fpt $(SRC) %"suppress error 2185"`, but FPT prints a message that errors have been suppressed, and this does not. I prefer having cleaner output.
+# FPT spacing warnings are suppressed because ELP90 wants `in out` to have a space, but FPT doesn't like that. FPT prints a message that errors have been suppressed. That's somewhat annoying. Using `%"no warnings for spacing"` instead doesn't have that message. I prefer having cleaner output. I used that approach for a while until I ran into another problem that FPT doesn't like and I had to disable that message too.
 lint: clean $(SRC_FPP) $(SRC) ## Run linters on Daphne
 	$(foreach source_file,$(SRC_FPP),echo ; echo $(source_file):; flint lint --flintrc /home/ben/.local/share/flint/fortran.yaml $(source_file);)
 	-icode-wrapper.py $(SRC_FPP)
-	fpt $(SRC) %"no warnings for spacing"
+	fpt $(SRC) %"suppress error 2185 3425"
 
 .PHONY: stats
 stats: ## Get some statistics for Daphne

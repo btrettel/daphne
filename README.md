@@ -6,7 +6,12 @@ Daphne is (will be) a Fortran library for rigorous data analysis in the physical
 
 Next steps:
 
+lint regex: all parameters are capitalized
+this would catch wp
+https://softwareengineering.stackexchange.com/questions/319688/what-is-the-history-for-naming-constants-in-all-uppercase
+
 - Add subroutine `check_flag(preal_input, filename, line_number)` to have arguments for the filename and line number.
+- Create `preal_flag` type with `dimension`, `lower_bound`, `upper_bound` member variables. Add a `preal_flag` type to `preal`.
 - Check in regex linter that format statements are lowercase. Change format statements in Daphne to be lowercase.
 - Figure out why FPT didn't like the function passing example you made.
 - Alphabetize `use`, `public`, `private`, and `type` statements. In each procedure section, alphabetize the procedures.
@@ -20,6 +25,9 @@ Next steps:
 - Add tests for 2D arrays.
 - Add `all_close_wp` function. <https://stdlib.fortran-lang.org/page/specs/stdlib_math.html#all_close-function>
 - Add exponentiation operator.
+- <https://en.wikipedia.org/wiki/Augmented_assignment>
+    - This is convenient and can prevent bugs from typing the variable name in in correctly.
+- <https://en.wikipedia.org/wiki/Increment_and_decrement_operators>
 - Dimensional homogeneity enforced for length, mass, and time.
 - First-order uncertainty propagation for uncorrelated variables.
 - Regression testing
@@ -28,6 +36,10 @@ Later:
 
 - Linear regression considering uncertainties for uncorrelated variables.
 - Add correlation for uncertainty propagation and regression.
+- Mutation testing for code
+- Fuzz testing for inputs
+    - <https://blog.trailofbits.com/2018/12/31/fuzzing-like-its-1989/>
+    - <https://www.sqlite.org/testing.html#sql_fuzz_using_the_american_fuzzy_lop_fuzzer>
 
 ## Philosophy
 
@@ -59,8 +71,10 @@ Portability is a major concern of mine when writing Daphne. As stated earlier, o
 - ifx 2022.1.0
 - flang-7 7.0.1
 - Oracle Developer Studio 12.6 Fortran Compiler, version 8.8
-- Microsoft Fortran PowerStation 4.0a (Win32 in Wine)
-- Essential Lahey Fortran 90 4.00c (Win32 in Wine)
 - g95 with `--std=F`
 - openf95 5.0
+- Essential Lahey Fortran 90 4.00c (Win32 in Wine)
+- Microsoft Fortran PowerStation 4.0a (Win32 in Wine)
 - Absoft Pro Fortran 7.0 (Win32 in Wine)
+- Intel Fortran Compiler 4.5 (Win32 in Wine, front-end to EPC Fortran-90 2.0)
+- Compaq Visual Fortran 6.6C (Win32 in Wine)

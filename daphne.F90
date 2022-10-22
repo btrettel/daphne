@@ -12,20 +12,15 @@ module daphne
     ! Summary
     ! -------
     ! 
-    ! Daphne is a Fortran library for rigorous data analysis in the
-    ! physical sciences. Dimensional analysis will prevent many
-    ! potential bugs, and uncertainty propagation will reveal the
-    ! limits of what can be understood from the data. Daphne
-    ! prioritizes correctness over speed, so this library is not
-    ! intended for HPC.
+    ! Daphne is a Fortran library for rigorous data analysis in the physical sciences. Dimensional analysis will prevent many
+    ! potential bugs, and uncertainty propagation will reveal the limits of what can be understood from the data. Daphne
+    ! prioritizes correctness over speed, so this library is not intended for HPC.
     ! 
     ! To use Daphne, create a variable of type `preal`:
     ! 
     !     type(preal) :: x
     ! 
-    ! Then initialize the variable with dimensions and
-    ! uncertainties. For example, to initialize a normally
-    ! distributed variable:
+    ! Then initialize the variable with dimensions and uncertainties. For example, to initialize a normally distributed variable:
     ! 
     !     x = N(1.5_wp, 0.1_wp)
     ! 
@@ -60,7 +55,8 @@ module daphne
     public :: error_print
     public :: is_close_wp
     public :: logical_test
-    public :: real_comparison_test
+    public :: real_equality_test
+    public :: real_inequality_test
     public :: tests_end
     public :: N
     private :: validate_preal
@@ -112,17 +108,12 @@ module daphne
         real(kind=wp) :: mean
         real(kind=wp) :: stdev
         
-        ! Why have logical variables for whether the `lower_bound`
-        ! and `upper_bound` are set if `lower_bound` is set to
-        ! `-huge(1._wp)` when `lower_bound_set == .false.` and
-        ! `upper_bound` is set to `huge(1._wp)` when
-        ! `upper_bound_set == .false.`? That is, if the bound
-        ! variables are set to the limits of the real type anyway,
-        ! why not simply check against those bounds anyway? The
-        ! bounds aren't simply checked against; they are
-        ! *propagated*. For example, if `x%lower_bound = -1._wp`, and
-        ! `y = 2._wp * x`, then `y%lower_bound = -2._wp`. The interval
-        ! arithmetic should be disabled when it is not needed.
+        ! Why have logical variables for whether the `lower_bound` and `upper_bound` are set if `lower_bound` is set to
+        ! `-huge(1._wp)` when `lower_bound_set == .false.` and `upper_bound` is set to `huge(1._wp)` when
+        ! `upper_bound_set == .false.`? That is, if the bound variables are set to the limits of the real type anyway, why not
+        ! simply check against those bounds anyway? The bounds aren't simply checked against; they are *propagated*. For example,
+        ! if `x%lower_bound = -1._wp`, and `y = 2._wp * x`, then `y%lower_bound = -2._wp`. The interval arithmetic should be
+        ! disabled when it is not needed.
 !        logical :: lower_bound_set
 !        real(kind=wp) :: lower_bound
 !        logical :: upper_bound_set
@@ -132,11 +123,9 @@ module daphne
     ! 6. Declare operators
     ! --------------------
     
-    ! TODO: Declare assignment operator to check if bounds of preal
-    ! to be assigned to are different than the bounds of the preal
-    ! being assigned from. In other words, if the bounds of the
-    ! preal on the left-hand-side are different from the bounds of
-    ! preal on the right-hand-side. Pick the more restrictive bounds.
+    ! TODO: Declare assignment operator to check if bounds of preal to be assigned to are different than the bounds of the preal
+    ! being assigned from. In other words, if the bounds of the preal on the left-hand-side are different from the bounds of preal
+    ! on the right-hand-side. Pick the more restrictive bounds.
     
     interface operator (+) !
         ! Overload the + operator so that it works for preals.
@@ -162,10 +151,8 @@ contains
     ! ---------------------
     
     __PURE__ subroutine assert(condition, msg, filename, line_number) !
-        ! Implementation of an assertion subroutine. Unlike in the
-        ! stdlib, the message is required here.
-        ! <https://stdlib.fortran-lang.org/page/specs/stdlib_error.html>
-        ! TODO: Add (optional) file and line numbers to this.
+        ! Implementation of an assertion subroutine. Unlike in the stdlib, the message is required here.
+        ! Roughly based on check from <https://stdlib.fortran-lang.org/page/specs/stdlib_error.html>.
         logical, intent(in) :: condition
         character(len=*), intent(in) :: msg
         character(len=*), optional, intent(in) :: filename
@@ -175,7 +162,7 @@ contains
 #ifdef __NOTPURE__
         __OUTERc__ if (.not. condition) then
             __INNERc__ if (present(filename) .and. present(line_number)) then
-                write(unit=line_str, fmt="(I5.5)") line_number
+                write(unit=line_str, fmt="(i5.5)") line_number
                 call error_stop("("//filename//":"//line_str//") ERROR: "//msg)
             else
                 call error_stop(msg)
@@ -203,24 +190,18 @@ contains
         ! Prints error message.
         character(len=*), intent(in) :: msg
 #ifdef __NOTPURE__
-        ! Not fully portable as a portable approach requires Fortran
-        ! 2003. <https://stackoverflow.com/a/8508757/1124489>
-        ! But the Oracle compiler doesn't have this as of
-        ! 2022-10-01! So I'm using the non-portable approach.
+        ! Not fully portable as a portable approach requires Fortran 2003. <https://stackoverflow.com/a/8508757/1124489>
+        ! But the Oracle compiler doesn't have this as of 2022-10-01! So I'm using the non-portable approach.
         integer, parameter :: error_unit = 0
         
 #ifndef __ELF90__
         write(unit=error_unit, fmt=*) msg
 #else
-        ! ELF90 will compile if `write(unit=error_unit, fmt=*) msg`
-        ! is used by itself, but the following error will appear at
+        ! ELF90 will compile if `write(unit=error_unit, fmt=*) msg` is used by itself, but the following error will appear at
         ! runtime:
-        ! > No file connected to unit (see "Input/Output" in the
-        ! > Essential Lahey Fortran 90 Reference).
-        ! So as far as I can tell, ELF90 can only write to stdout. So
-        ! I write error messages to stdout and an error log file.
-        ! Since ELF90 can't have non-zero exit codes, the error log
-        ! is how I tell whether the tests succeeded or failed.
+        ! > No file connected to unit (see "Input/Output" in the Essential Lahey Fortran 90 Reference).
+        ! So as far as I can tell, ELF90 can only write to stdout. So I write error messages to stdout and an error log file. Since
+        ! ELF90 can't have non-zero exit codes, the error log is how I tell whether the tests succeeded or failed.
         
         integer :: i
         
@@ -280,23 +261,22 @@ contains
         real(kind=wp), intent(in) :: input_real_1, input_real_2
         real(kind=wp), intent(in), optional :: rel_tol, abs_tol
         real(kind=wp) :: rel_tol_set, abs_tol_set, tol
-        integer :: prec
         logical :: is_close_wp
         
-        prec = precision(input_real_1)
-        
         if (present(rel_tol)) then
-            call assert(rel_tol >= 0.0_wp, "Set relative tolerance not zero or more.")
+            call assert(rel_tol >= 0.0_wp, "Set relative tolerance to zero or greater.")
             rel_tol_set = rel_tol
         else
-            rel_tol_set = 10.0_wp**(-(real(prec, kind=wp) - 2.0_wp))
+            rel_tol_set = 10.0_wp * epsilon(1.0_wp)
+            call assert(rel_tol_set > 0.0_wp, "Default relative tolerance not greater than zero.")
+            call assert(rel_tol_set < 0.0001_wp, "Default relative tolerance not particularly small.")
         end if
         
         if (present(abs_tol)) then
-            call assert(abs_tol >= 0.0_wp, "Set absolute tolerance not zero or more.")
+            call assert(abs_tol >= 0.0_wp, "Set absolute tolerance to zero or greater.")
             abs_tol_set = abs_tol
         else
-            abs_tol_set = 10.0_wp**(-(real(prec, kind=wp) - 2.0_wp))
+            abs_tol_set = 10.0_wp * epsilon(1.0_wp)
         end if
         
         tol = max(rel_tol_set * abs(input_real_1), rel_tol_set * abs(input_real_2), abs_tol_set)
@@ -312,8 +292,7 @@ contains
     end function is_close_wp
     
     subroutine logical_test(condition, msg, number_of_failures) !
-        ! Check whether test condition is true, increase
-        ! number_of_failures if false.
+        ! Check whether test condition is true, increase number_of_failures if false.
         
         logical, intent(in) :: condition
         character(len=*), intent(in) :: msg
@@ -328,9 +307,8 @@ contains
         return
     end subroutine logical_test
     
-    subroutine real_comparison_test(program_real, expected_real, msg, number_of_failures) !
-        ! Check whether two reals are close, increase
-        ! number_of_failures if false.
+    subroutine real_equality_test(program_real, expected_real, msg, number_of_failures) !
+        ! Check whether two reals are close, increase number_of_failures if false.
         
         real(kind=wp), intent(in) :: program_real, expected_real
         character(len=*), intent(in) :: msg
@@ -341,14 +319,27 @@ contains
         write(unit=*, fmt=*) "difference:", abs(program_real - expected_real)
         call logical_test(is_close_wp(program_real, expected_real), msg, number_of_failures)
         return
-    end subroutine real_comparison_test
+    end subroutine real_equality_test
+    
+    subroutine real_inequality_test(program_real, expected_real, msg, number_of_failures) !
+        ! Check whether two reals are close, increase number_of_failures if true.
+        
+        real(kind=wp), intent(in) :: program_real, expected_real
+        character(len=*), intent(in) :: msg
+        integer, intent(in out) :: number_of_failures
+        
+        write(unit=*, fmt=*) "  returned:", program_real
+        write(unit=*, fmt=*) "  expected:", expected_real
+        write(unit=*, fmt=*) "difference:", abs(program_real - expected_real)
+        call logical_test(.not. is_close_wp(program_real, expected_real), msg, number_of_failures)
+        return
+    end subroutine real_inequality_test
     
     subroutine tests_end(number_of_failures) !
         integer, intent(in) :: number_of_failures
         
         if (number_of_failures > 0) then
-            ! TODO: After adding a function to convert integers to
-            ! strings, change the next line to use error_print.
+            ! TODO: After adding a function to convert integers to strings, change the next line to use error_print.
             write(unit=*, fmt=*) number_of_failures, "test(s) failed."
             call error_stop("Exiting with error.")
         else
@@ -453,8 +444,7 @@ contains
         type(preal), dimension(size(preal_array_1)) :: preal_array_out
         integer :: i, lower_index, upper_index
         
-        ! Check that preal_array_1 and preal_array_1 have the same
-        ! dimensions.
+        ! Check that preal_array_1 and preal_array_1 have the same dimensions.
         call assert(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "padd_array: lower array bound mismatch")
         call assert(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "padd_array: upper array bound mismatch")
         
@@ -479,8 +469,7 @@ contains
         type(preal), dimension(size(preal_array_1)) :: preal_array_out
         integer :: i, lower_index, upper_index
         
-        ! Check that preal_array_1 and preal_array_1 have the same
-        ! dimensions.
+        ! Check that preal_array_1 and preal_array_1 have the same dimensions.
         call assert(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "psubtract_array: lower array bound mismatch")
         call assert(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "psubtract_array: upper array bound mismatch")
         
@@ -505,8 +494,7 @@ contains
         type(preal), dimension(size(preal_array_1)) :: preal_array_out
         integer :: i, lower_index, upper_index
         
-        ! Check that preal_array_1 and preal_array_1 have the same
-        ! dimensions.
+        ! Check that preal_array_1 and preal_array_1 have the same dimensions.
         call assert(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "pmultiply_array: lower array bound mismatch")
         call assert(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "pmultiply_array: upper array bound mismatch")
         
@@ -531,8 +519,7 @@ contains
         type(preal), dimension(size(preal_array_1)) :: preal_array_out
         integer :: i, lower_index, upper_index
         
-        ! Check that preal_array_1 and preal_array_1 have the same
-        ! dimensions.
+        ! Check that preal_array_1 and preal_array_1 have the same dimensions.
         call assert(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "pdivide_array: lower array bound mismatch")
         call assert(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "pdivide_array: upper array bound mismatch")
         
