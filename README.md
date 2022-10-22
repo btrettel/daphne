@@ -71,10 +71,15 @@ Portability is a major concern of mine when writing Daphne. As stated earlier, o
 - ifx 2022.1.0
 - flang-7 7.0.1
 - Oracle Developer Studio 12.6 Fortran Compiler, version 8.8
-- g95 with `--std=F`
-- openf95 5.0
+- g95 with `--std=F` (compilation only as this compiler needs an outdated linker)
+- openf95 5.0 (compilation only as this compiler needs an outdated linker)
 - Essential Lahey Fortran 90 4.00c (Win32 in Wine)
 - Microsoft Fortran PowerStation 4.0a (Win32 in Wine)
 - Absoft Pro Fortran 7.0 (Win32 in Wine)
 - Intel Fortran Compiler 4.5 (Win32 in Wine, front-end to EPC Fortran-90 2.0)
 - Compaq Visual Fortran 6.6C (Win32 in Wine)
+- Silverfrost Fortran (FTN95) Personal Edition 8.90 (Win32 in Wine)
+
+### Compilers Daphne doesn't work in yet
+
+- LFortran 0.16.0 (LFortran lacks some Fortran 90 features Daphne uses)

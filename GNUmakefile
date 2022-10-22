@@ -44,6 +44,8 @@ check: ## Compile Daphne and run tests in many compilers
 	make clean
 	make cvf
 	make clean
+	make ftn95
+	make clean
 	@echo Tests on all compilers ran successfully.
 
 .PHONY: checkone
@@ -123,9 +125,21 @@ ifl: ## Compile Daphne and run tests for ifl
 cvf: ## Compile Daphne and run tests for cvf
 	make checkone FC='wine f90' FFLAGS='/check:all /stand:f90 /warn:all' OBIN='tests.exe' OFLAG='/exe:tests.exe' ORUN='wine tests.exe' FPPFLAGS='-D__DP__' SRC='daphne.f90 tests.f90'
 
+.PHONY: ftn95
+ftn95: $(SRC_FPP) ## Compile Daphne and run tests for ftn95
+	#make tests FC='wine ftn95' FFLAGS='/link /checkmate /iso /restrict_syntax /implicit_none /errorlog' OBIN='tests.exe' OFLAG='' ORUN='wine tests.EXE' FPPFLAGS='-D__DP__' SRC='daphne.f90 tests.f90'
+	gfortran -E '-D__DP__' daphne.F90 | grep -v '^#' > daphne.f95
+	gfortran -E '-D__DP__' tests.F90 | grep -v '^#' > tests.f95
+	wine ftn95 /checkmate /iso /restrict_syntax /errorlog daphne.f95
+	wine ftn95 /link /checkmate /iso /restrict_syntax /errorlog tests.f95
+	mv daphne.f95 daphne.f90
+	mv tests.f95 tests.f90
+	wine tests.EXE
+	@echo Tests on ftn95 ran successfully.
+
 .PHONY: clean
 clean: ## Remove compiled binaries and debugging files
-	rm -rfv *.f90 tests *.gcda *.gcno *.cmdx *.cmod *.ilm *.stb *.dbg *.o *.mod *.exe *.obj *.fpl *.FPT modtable.txt *.map *.exe *.mod *.obj *.lib *.s error.log *.FPI *.pc *.pcl *.d
+	rm -rfv *.cmdx *.cmod *.d *.dbg *.ERR error.log *.exe *.EXE *.f90 *.f95 *.FPI *.fpl *.FPT *.gcda *.gcno *.ilm *.lib *.map *.mod *.MOD modtable.txt *.o *.obj *.pc *.pcl *.s *.stb tests
 
 # This needs to be run on Ben Trettel's computer as I am using a custom YAML file for CERFACS flint and wrote a wrapper script to interpret the XML output by i-Code CNES.
 # FPT spacing warnings are suppressed because ELP90 wants `in out` to have a space, but FPT doesn't like that. FPT prints a message that errors have been suppressed. That's somewhat annoying. Using `%"no warnings for spacing"` instead doesn't have that message. I prefer having cleaner output. I used that approach for a while until I ran into another problem that FPT doesn't like and I had to disable that message too.
