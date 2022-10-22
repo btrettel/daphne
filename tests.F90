@@ -37,7 +37,7 @@ program tests
     
     type(preal) :: x, y, z
     type(preal), dimension(3) :: array_1, array_2, array_3
-    integer :: number_of_failures
+    integer(kind=i5) :: number_of_failures
     
     ! 3. Initialize variables
     ! -----------------------
@@ -56,6 +56,7 @@ program tests
     ! Check that my assertion macro to insert filenames and line
     ! numbers works.
     call ASSERT(.true., "This is true.")
+    !call ASSERT(.false., "This is false.") ! For testing the assert function.
     
     call logical_test(.true., "logical test", number_of_failures)
     

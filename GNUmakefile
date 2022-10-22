@@ -42,13 +42,9 @@ check: ## Compile Daphne and run tests in many compilers
 	make clean
 	make ifl
 	make clean
-	#make cvf
-	#make clean
+	make cvf
+	make clean
 	@echo Tests on all compilers ran successfully.
-
-# lfortran -c --cpp -D__DP__ -D__F__ daphne.F90 tests.F90
-# lfortran daphne.o tests.o
-# The second step is necessary because linking doesn't work in one step for some reason: <https://fortran-lang.discourse.group/t/lfortran-minimum-viable-product-mvp/1922/10>
 
 .PHONY: checkone
 checkone: tests
@@ -93,6 +89,15 @@ flang-7: ## Compile Daphne and run tests for flang-7
 sunf95: ## Compile Daphne and run tests for sunf95
 	make checkone FC=sunf95 FFLAGS='-fpp -g -w4 -errwarn=%all -e -fnonstd -stackvar -ansi -C -fpover -xcheck=%all -U'
 
+# lfortran -c --cpp -D__DP__ -D__F__ daphne.F90 tests.F90
+# lfortran daphne.o tests.o
+# The second step is necessary because linking doesn't work in one step for some reason: <https://fortran-lang.discourse.group/t/lfortran-minimum-viable-product-mvp/1922/10>
+.PHONY: lfortran
+lfortran: ## Compile Daphne and run tests for lfortran
+	make tests FC=lfortran FFLAGS='-c --cpp -D__DP__ -D__F__'
+	lfortran daphne.o tests.o
+	make checkone
+
 # See comment above about g95 for why this is `make tests` and not `make checkone`.
 .PHONY: openf95
 openf95: ## Compile Daphne and run tests for openf95
@@ -124,10 +129,12 @@ clean: ## Remove compiled binaries and debugging files
 
 # This needs to be run on Ben Trettel's computer as I am using a custom YAML file for CERFACS flint and wrote a wrapper script to interpret the XML output by i-Code CNES.
 # FPT spacing warnings are suppressed because ELP90 wants `in out` to have a space, but FPT doesn't like that. FPT prints a message that errors have been suppressed. That's somewhat annoying. Using `%"no warnings for spacing"` instead doesn't have that message. I prefer having cleaner output. I used that approach for a while until I ran into another problem that FPT doesn't like and I had to disable that message too.
-lint: clean $(SRC_FPP) $(SRC) ## Run linters on Daphne
+# 3437: FPT seems to think that (for example) `rel_tol_set = 10.0_wp*EPSILON(1.0_wp)` is a "Mixed real or complex sizes in expression - loss of precision", but it's not. `epsilon` returns the same kind as its argument. This sort of problem seems better detected by the other compilers, so I'm okay with disabling this message.
+lint: $(SRC_FPP) $(SRC) ## Run linters on Daphne
 	$(foreach source_file,$(SRC_FPP),echo ; echo $(source_file):; flint lint --flintrc /home/ben/.local/share/flint/fortran.yaml $(source_file);)
 	-icode-wrapper.py $(SRC_FPP)
-	fpt $(SRC) %"suppress error 2185 3425"
+	rm *.FPT *.FPI *.fpl
+	fpt $(SRC) %"suppress error 2185 3425 3437"
 
 .PHONY: stats
 stats: ## Get some statistics for Daphne

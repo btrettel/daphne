@@ -85,14 +85,14 @@ module daphne
     integer, public, parameter :: wp = selected_real_kind(15, 307)
 #endif
     
-    ! Kind number for integer used to count preals.
-    !integer, parameter :: intk = selected_int_kind(4)
+    ! Kind number for integers.
+    integer, public, parameter :: i5 = selected_int_kind(5)
     
     ! 4. Declare variables
     ! --------------------
     
     ! number of preals, used as the dimension of the covariance matrix
-    !integer(kind=intk) :: number_of_preals = 0
+    !integer(kind=i5) :: number_of_preals = 0
     
     ! covariance matrix
     ! real(kind=wp), allocatable, dimension(:,:) :: covariance
@@ -156,14 +156,14 @@ contains
         logical, intent(in) :: condition
         character(len=*), intent(in) :: msg
         character(len=*), optional, intent(in) :: filename
-        integer, optional, intent(in) :: line_number
+        integer(kind=i5), optional, intent(in) :: line_number
         character(len=5) :: line_str
         
 #ifdef __NOTPURE__
         __OUTERc__ if (.not. condition) then
             __INNERc__ if (present(filename) .and. present(line_number)) then
-                write(unit=line_str, fmt="(i5.5)") line_number
-                call error_stop("("//filename//":"//line_str//") ERROR: "//msg)
+                write(unit=line_str, fmt="(i5)") line_number
+                call error_stop("("//filename//":"//trim(adjustl(line_str))//") ERROR: "//msg)
             else
                 call error_stop(msg)
             end if __INNER__
@@ -192,7 +192,7 @@ contains
 #ifdef __NOTPURE__
         ! Not fully portable as a portable approach requires Fortran 2003. <https://stackoverflow.com/a/8508757/1124489>
         ! But the Oracle compiler doesn't have this as of 2022-10-01! So I'm using the non-portable approach.
-        integer, parameter :: error_unit = 0
+        integer(kind=i5), parameter :: error_unit = 0
         
 #ifndef __ELF90__
         write(unit=error_unit, fmt=*) msg
@@ -202,8 +202,7 @@ contains
         ! > No file connected to unit (see "Input/Output" in the Essential Lahey Fortran 90 Reference).
         ! So as far as I can tell, ELF90 can only write to stdout. So I write error messages to stdout and an error log file. Since
         ! ELF90 can't have non-zero exit codes, the error log is how I tell whether the tests succeeded or failed.
-        
-        integer :: i
+        integer(kind=i5) :: i
         
         open(unit=error_unit, file="error.log", status="replace", iostat=i, position="append")
         if (i /= 0) then
@@ -246,7 +245,7 @@ contains
         
         type(preal), dimension(:), intent(in) :: preal_array_in
 #ifdef __NOTPURE__
-        integer :: i
+        integer(kind=i5) :: i
         
         do i = lbound(preal_array_in, dim=1), ubound(preal_array_in, dim=1)
             call validate_preal(preal_array_in(i))
@@ -296,7 +295,7 @@ contains
         
         logical, intent(in) :: condition
         character(len=*), intent(in) :: msg
-        integer, intent(in out) :: number_of_failures
+        integer(kind=i5), intent(in out) :: number_of_failures
         
         if (condition) then
             write(unit=*, fmt=*) "pass: "//msg
@@ -312,7 +311,7 @@ contains
         
         real(kind=wp), intent(in) :: program_real, expected_real
         character(len=*), intent(in) :: msg
-        integer, intent(in out) :: number_of_failures
+        integer(kind=i5), intent(in out) :: number_of_failures
         
         write(unit=*, fmt=*) "  returned:", program_real
         write(unit=*, fmt=*) "  expected:", expected_real
@@ -326,7 +325,7 @@ contains
         
         real(kind=wp), intent(in) :: program_real, expected_real
         character(len=*), intent(in) :: msg
-        integer, intent(in out) :: number_of_failures
+        integer(kind=i5), intent(in out) :: number_of_failures
         
         write(unit=*, fmt=*) "  returned:", program_real
         write(unit=*, fmt=*) "  expected:", expected_real
@@ -336,7 +335,7 @@ contains
     end subroutine real_inequality_test
     
     subroutine tests_end(number_of_failures) !
-        integer, intent(in) :: number_of_failures
+        integer(kind=i5), intent(in) :: number_of_failures
         
         if (number_of_failures > 0) then
             ! TODO: After adding a function to convert integers to strings, change the next line to use error_print.
@@ -442,7 +441,7 @@ contains
         type(preal), dimension(:), intent(in) :: preal_array_1
         type(preal), dimension(:), intent(in) :: preal_array_2
         type(preal), dimension(size(preal_array_1)) :: preal_array_out
-        integer :: i, lower_index, upper_index
+        integer(kind=i5) :: i, lower_index, upper_index
         
         ! Check that preal_array_1 and preal_array_1 have the same dimensions.
         call assert(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "padd_array: lower array bound mismatch")
@@ -467,7 +466,7 @@ contains
         type(preal), dimension(:), intent(in) :: preal_array_1
         type(preal), dimension(:), intent(in) :: preal_array_2
         type(preal), dimension(size(preal_array_1)) :: preal_array_out
-        integer :: i, lower_index, upper_index
+        integer(kind=i5) :: i, lower_index, upper_index
         
         ! Check that preal_array_1 and preal_array_1 have the same dimensions.
         call assert(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "psubtract_array: lower array bound mismatch")
@@ -492,7 +491,7 @@ contains
         type(preal), dimension(:), intent(in) :: preal_array_1
         type(preal), dimension(:), intent(in) :: preal_array_2
         type(preal), dimension(size(preal_array_1)) :: preal_array_out
-        integer :: i, lower_index, upper_index
+        integer(kind=i5) :: i, lower_index, upper_index
         
         ! Check that preal_array_1 and preal_array_1 have the same dimensions.
         call assert(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "pmultiply_array: lower array bound mismatch")
@@ -517,7 +516,7 @@ contains
         type(preal), dimension(:), intent(in) :: preal_array_1
         type(preal), dimension(:), intent(in) :: preal_array_2
         type(preal), dimension(size(preal_array_1)) :: preal_array_out
-        integer :: i, lower_index, upper_index
+        integer(kind=i5) :: i, lower_index, upper_index
         
         ! Check that preal_array_1 and preal_array_1 have the same dimensions.
         call assert(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "pdivide_array: lower array bound mismatch")
