@@ -6,14 +6,16 @@
 # TODO: <https://github.com/llvm/llvm-project/tree/main/flang/#building-flang-standalone>
 # TODO: make commit to run lint, coverage, and check before making a commit.
 
-FC       := gfortran
-FFLAGS   := -cpp -D__GIT__=\"$(shell git rev-parse HEAD)\" -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f95 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-132 -fimplicit-none
-FPPFLAGS := 
-OBIN     := tests
-OFLAG    := -o $(OBIN)
-ORUN     := ./$(OBIN)
-SRC      := daphne.F90 tests.F90
-SRC_FPP  := $(patsubst %.F90, %.f90,$(SRC))
+FC          := gfortran
+FFLAGS      := -cpp -D__GIT__=\"$(shell git rev-parse HEAD)\" -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f95 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-132 -fimplicit-none
+FPPFLAGS    := 
+OBIN        := tests
+OFLAG       := -o $(OBIN)
+ORUN        := ./$(OBIN)
+SRC         := daphne.F90 tests.F90
+SRC_FPP     := $(patsubst %.F90, %.f90,$(SRC))
+SRC_ALL     := daphne.F90 tests.F90 fail.F90
+SRC_ALL_FPP := $(patsubst %.F90, %.f90,$(SRC_ALL))
 
 # gfortran, ELF90, g95 -std=F, ifort, ifx, flang-7, sunf95 (Oracle), FL32 (Microsoft Fortran PowerStation 4.0)
 # ELF90 is second as it is hard to satisfy.
@@ -144,11 +146,11 @@ clean: ## Remove compiled binaries and debugging files
 # This needs to be run on Ben Trettel's computer as I am using a custom YAML file for CERFACS flint and wrote a wrapper script to interpret the XML output by i-Code CNES.
 # FPT spacing warnings are suppressed because ELP90 wants `in out` to have a space, but FPT doesn't like that. FPT prints a message that errors have been suppressed. That's somewhat annoying. Using `%"no warnings for spacing"` instead doesn't have that message. I prefer having cleaner output. I used that approach for a while until I ran into another problem that FPT doesn't like and I had to disable that message too.
 # 3437: FPT seems to think that (for example) `rel_tol_set = 10.0_wp*EPSILON(1.0_wp)` is a "Mixed real or complex sizes in expression - loss of precision", but it's not. `epsilon` returns the same kind as its argument. This sort of problem seems better detected by the other compilers, so I'm okay with disabling this message.
-lint: $(SRC_FPP) $(SRC) ## Run linters on Daphne
-	$(foreach source_file,$(SRC_FPP),echo ; echo $(source_file):; flint lint --flintrc /home/ben/.local/share/flint/fortran.yaml $(source_file);)
-	-icode-wrapper.py $(SRC_FPP)
+lint: $(SRC_ALL_FPP) $(SRC_ALL) ## Run linters on Daphne
+	$(foreach source_file,$(SRC_ALL_FPP),echo ; echo $(source_file):; flint lint --flintrc /home/ben/.local/share/flint/fortran.yaml $(source_file);)
+	-icode-wrapper.py $(SRC_ALL_FPP)
 	rm -fv *.FPT *.FPI *.fpl
-	fpt $(SRC) %"suppress error 2185 3425 3437"
+	fpt $(SRC_ALL) %"suppress error 1867 2185 3425 3437"
 
 .PHONY: stats
 stats: ## Get some statistics for Daphne

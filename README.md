@@ -6,12 +6,13 @@ Daphne is (will be) a Fortran library for rigorous data analysis in the physical
 
 Next steps:
 
+- Test that the output array has the same dimensions as the input arrays.
+- Test that operations fail if the arrays don't have the same dimensions.
 - Add subroutine to do "Check that preal_array_1 and preal_array_1 have the same dimensions" and "Allocate the output array" in the array operation functions to reduce redundancy.
-- Make the assertions not quit so that I can get higher branch coverage.
+- Make `check_flag(condition, flag, filename, line_number)` and `CHECK_FLAG(condition, flag)`, which set `flag` to `true` if the condition is false and do not `stop`, so that I can get higher branch coverage.
 - Add fail2.F90 and fail3.F90 to test assertions with and without line numbers failing and stopping.
 - Add subroutine `check_flag(preal_input, filename, line_number)` to have arguments for the filename and line number.
-- Create `preal_flag` type with `dimension`, `lower_bound`, `upper_bound` member variables. Add a `preal_flag` type to `preal`.
-- Check in regex linter that format statements are lowercase. Change format statements in Daphne to be lowercase.
+- Create `preal_error_flag` type with `dimension`, `lower_bound`, `upper_bound` member variables. Add a `preal_error_flag` type to `preal`.
 - Figure out why FPT didn't like the function passing example you made.
 - Alphabetize `use`, `public`, `private`, and `type` statements. In each procedure section, alphabetize the procedures.
 - How can the `intent` be indicated if I pass in a function into a procedure and use an `interface` block to make the function explicit and not `external`? `intent` statement?
@@ -30,6 +31,7 @@ Later:
 - Linear regression considering uncertainties for uncorrelated variables.
 - Add correlation for uncertainty propagation and regression.
 - Mutation testing for code
+    - Getting started: Pick a random line. Change one thing about this line.
 - Fuzz testing for inputs
     - <https://blog.trailofbits.com/2018/12/31/fuzzing-like-its-1989/>
     - <https://www.sqlite.org/testing.html#sql_fuzz_using_the_american_fuzzy_lop_fuzzer>
