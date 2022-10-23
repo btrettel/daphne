@@ -340,7 +340,10 @@ contains
         if (number_of_failures > 0) then
             ! TODO: After adding a function to convert integers to strings, change the next line to use error_print.
             write(unit=*, fmt=*) number_of_failures, "test(s) failed."
-            call error_stop("Exiting with error.")
+            
+            ! The next line is written this way to get as much code coverage as possible in a single script that fails. It could be
+            ! written with `error_stop` but I need to cover `assert` too, and using `assert` gets both `assert` and `error_stop`.
+            call assert(.false., "Exiting with error.")
         else
             write(unit=*, fmt=*) "All tests passed."
         end if

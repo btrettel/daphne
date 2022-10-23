@@ -4,7 +4,8 @@
 .DELETE_ON_ERROR:
 
 # TODO: <https://github.com/llvm/llvm-project/tree/main/flang/#building-flang-standalone>
-# TODO: <http://fortranwiki.org/fortran/show/Debugging+tools>
+# TODO: Branch coverage: <https://stackoverflow.com/a/14523575/1124489>
+# TODO: make commit to run lint, coverage, and check before making a commit.
 
 FC       := gfortran
 FFLAGS   := -cpp -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f95 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-132 -fimplicit-none
@@ -14,7 +15,6 @@ OFLAG    := -o $(OBIN)
 ORUN     := ./$(OBIN)
 SRC      := daphne.F90 tests.F90
 SRC_FPP  := $(patsubst %.F90, %.f90,$(SRC))
-COVERAGE := $(patsubst %.F90, %.gcda,$(SRC))
 
 # gfortran, ELF90, g95 -std=F, ifort, ifx, flang-7, sunf95 (Oracle), FL32 (Microsoft Fortran PowerStation 4.0)
 # ELF90 is second as it is hard to satisfy.
@@ -76,9 +76,6 @@ g95: ## Compile Daphne and run tests for g95 -std=F
 gfortran: ## Compile Daphne and run tests for gfortran
 	make checkone
 
-$(COVERAGE):
-	make gfortran
-
 .PHONY: ifort
 ifort: ## Compile Daphne and run tests for ifort
 	make checkone FC=ifort FFLAGS='-fpp -warn errors -check all -warn all -diag-error=remark,warn,error -O0 -g -traceback -fpe0 -fltconsistency -stand:f90 -debug full -diag-error-limit=1'
@@ -107,7 +104,7 @@ lfortran: ## Compile Daphne and run tests for lfortran
 # See comment above about g95 for why this is `make tests` and not `make checkone`.
 .PHONY: openf95
 openf95: ## Compile Daphne and run tests for openf95
-	make tests FC=openf95 FFLAGS='-c -D__DP__ -fullwarn -col72 -Wuninitialized'
+	make tests FC=openf95 FFLAGS='-c -D__DP__ -fullwarn -Wuninitialized'
 
 .PHONY: fl32
 fl32: ## Compile Daphne and run tests for fl32
@@ -143,7 +140,7 @@ ftn95: $(SRC_FPP) ## Compile Daphne and run tests for ftn95
 
 .PHONY: clean
 clean: ## Remove compiled binaries and debugging files
-	rm -rfv *.cmdx *.cmod *.d *.dbg *.ERR error.log *.exe *.EXE *.f90 *.f95 *.FPI *.fpl *.FPT *.gcda *.gcno *.gcov html-cov/ *.ilm lcov.info *.lib *.map *.mod *.MOD modtable.txt *.o *.obj *.pc *.pcl *.s *.stb tests
+	rm -rfv *.cmdx *.cmod *.d *.dbg *.ERR error.log *.exe *.EXE *.f90 *.f95 fail *.FPI *.fpl *.FPT *.gcda *.gcno *.gcov html-cov/ *.ilm *.info *.lib *.map *.mod *.MOD modtable.txt *.o *.obj *.pc *.pcl *.s *.stb tests
 
 # This needs to be run on Ben Trettel's computer as I am using a custom YAML file for CERFACS flint and wrote a wrapper script to interpret the XML output by i-Code CNES.
 # FPT spacing warnings are suppressed because ELP90 wants `in out` to have a space, but FPT doesn't like that. FPT prints a message that errors have been suppressed. That's somewhat annoying. Using `%"no warnings for spacing"` instead doesn't have that message. I prefer having cleaner output. I used that approach for a while until I ran into another problem that FPT doesn't like and I had to disable that message too.
@@ -166,10 +163,19 @@ tests: $(SRC)
 	gfortran -E $(FPPFLAGS) $< | grep -v '^#' > $@
 
 .PHONY: coverage
-coverage: $(COVERAGE)
-	gcov $(SRC)
-	lcov --directory . --capture --output-file lcov.info
+coverage:
+	make gfortran
+	lcov --directory . --capture --output-file lcov_1.info
+	rm -v *.gcda *.gcno tests
+	make fail
+	lcov --directory . --capture --output-file lcov_2.info
+	lcov --add-tracefile lcov_1.info --add-tracefile lcov_2.info --output-file lcov.info
 	genhtml -t "Daphne" -o html-cov ./lcov.info
+
+fail:
+	make tests FFLAGS='-cpp -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f95 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-derived -Wimplicit-interface --coverage -ffree-line-length-132 -fimplicit-none' SRC='daphne.F90 fail.F90' OFLAG='-o fail'
+	if ./fail; then echo Assertion does not fail properly. ; exit 1; fi
+	@echo Assertion fails properly.
 
 # <https://www.thapaliya.com/en/writings/well-documented-makefiles/>
 # This should not be the first target. Place at the end.

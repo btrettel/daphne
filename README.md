@@ -6,18 +6,11 @@ Daphne is (will be) a Fortran library for rigorous data analysis in the physical
 
 Next steps:
 
-lint regex: all parameters are capitalized
-this would catch wp
-https://softwareengineering.stackexchange.com/questions/319688/what-is-the-history-for-naming-constants-in-all-uppercase
-
 - Add subroutine `check_flag(preal_input, filename, line_number)` to have arguments for the filename and line number.
 - Create `preal_flag` type with `dimension`, `lower_bound`, `upper_bound` member variables. Add a `preal_flag` type to `preal`.
 - Check in regex linter that format statements are lowercase. Change format statements in Daphne to be lowercase.
 - Figure out why FPT didn't like the function passing example you made.
 - Alphabetize `use`, `public`, `private`, and `type` statements. In each procedure section, alphabetize the procedures.
-- Add multiple tests that are expected to fail.
-    - `assert(.false., [...])`
-    - `error_stop([...])`
 - How can the `intent` be indicated if I pass in a function into a procedure and use an `interface` block to make the function explicit and not `external`? `intent` statement?
 - Add Git revision number as preprocessor command in compiler flags GNUmakefile.
 - Move `logical_test`, `real_comparison_test`, and `tests_end` to tests.f90 under `contains` for the `program`.
