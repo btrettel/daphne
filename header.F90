@@ -1,6 +1,10 @@
 #define ASSERT(ARG1, ARG2) assert(ARG1, ARG2, __FILE__, __LINE__)
 #define CHECK_FLAG(ARG) check(ARG, __FILE__, __LINE__)
 
+#ifndef __GIT__
+#define __GIT__ "no revision specified"
+#endif
+
 #ifndef __F__
 #define __PURE__
 #define __NOTPURE__

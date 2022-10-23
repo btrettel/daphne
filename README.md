@@ -6,14 +6,15 @@ Daphne is (will be) a Fortran library for rigorous data analysis in the physical
 
 Next steps:
 
+- Add subroutine to do "Check that preal_array_1 and preal_array_1 have the same dimensions" and "Allocate the output array" in the array operation functions to reduce redundancy.
+- Make the assertions not quit so that I can get higher branch coverage.
+- Add fail2.F90 and fail3.F90 to test assertions with and without line numbers failing and stopping.
 - Add subroutine `check_flag(preal_input, filename, line_number)` to have arguments for the filename and line number.
 - Create `preal_flag` type with `dimension`, `lower_bound`, `upper_bound` member variables. Add a `preal_flag` type to `preal`.
 - Check in regex linter that format statements are lowercase. Change format statements in Daphne to be lowercase.
 - Figure out why FPT didn't like the function passing example you made.
 - Alphabetize `use`, `public`, `private`, and `type` statements. In each procedure section, alphabetize the procedures.
 - How can the `intent` be indicated if I pass in a function into a procedure and use an `interface` block to make the function explicit and not `external`? `intent` statement?
-- Add Git revision number as preprocessor command in compiler flags GNUmakefile.
-- Move `logical_test`, `real_comparison_test`, and `tests_end` to tests.f90 under `contains` for the `program`.
 - Make array operators work in 2D arrays.
 - Add tests for 2D arrays.
 - Add `all_close_wp` function. <https://stdlib.fortran-lang.org/page/specs/stdlib_math.html#all_close-function>
@@ -23,7 +24,6 @@ Next steps:
 - <https://en.wikipedia.org/wiki/Increment_and_decrement_operators>
 - Dimensional homogeneity enforced for length, mass, and time.
 - First-order uncertainty propagation for uncorrelated variables.
-- Regression testing
 
 Later:
 

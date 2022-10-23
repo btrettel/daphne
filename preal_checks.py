@@ -4,6 +4,8 @@
 import argparse
 import sys
 
+# TODO: <https://en.wikipedia.org/wiki/The_Power_of_10:_Rules_for_Developing_Safety-Critical_Code>: > 5. Use a minimum of two runtime assertions per function.>
+
 # <https://stackoverflow.com/a/14981125/1124489>
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)

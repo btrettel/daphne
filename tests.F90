@@ -47,11 +47,12 @@ program tests
     ! 4. Tests
     ! --------
     
+    write(unit=*, fmt=*) "Git revision number: ", __GIT__
+    
     ! 4a. Testing procedures
     
-    ! TODO: validate_preal
-    ! TODO: validate_preal_array
-    ! TODO: Test Git revision number.
+    ! TODO: validate_preal (both ways)
+    ! TODO: validate_preal_array (both ways)
     
     ! Check that my assertion macro to insert filenames and line
     ! numbers works.
@@ -63,6 +64,8 @@ program tests
     call logical_test(__FILE__ == "tests.F90", "preprocessor filename", number_of_failures)
     
     call logical_test(__LINE__ > 0, "preprocessor line number", number_of_failures)
+    
+    call logical_test(len(__GIT__) == 40, "Git revision number", number_of_failures)
     
     call logical_test(is_close_wp(1.0_wp, 1.0_wp), "is_close_wp, identical numbers (1)", number_of_failures)
     
