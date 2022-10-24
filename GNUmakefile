@@ -7,7 +7,7 @@
 # TODO: make commit to run lint, coverage, and check before making a commit.
 
 FC          := gfortran
-FFLAGS      := -cpp -D__GIT__=\"$(shell git rev-parse HEAD)\" -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f95 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-132 -fimplicit-none
+FFLAGS      := -cpp -D__GIT__=\"$(shell git rev-parse HEAD)\" -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f95 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-logical=true -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-132 -fimplicit-none
 FPPFLAGS    := 
 OBIN        := tests
 OFLAG       := -o $(OBIN)
@@ -77,6 +77,7 @@ g95: ## Compile Daphne and run tests for g95 -std=F
 gfortran: ## Compile Daphne and run tests for gfortran
 	make checkone
 
+# TODO: `-init=` to help detect uninitialized variables. Ideally `logical`s will be set to `.true.` so that flags are by default on, which would return an error if `check_flag` were run.
 .PHONY: ifort
 ifort: ## Compile Daphne and run tests for ifort
 	make checkone FC=ifort FFLAGS='-fpp -D__GIT__=\"$(shell git rev-parse HEAD)\" -warn errors -check all -warn all -diag-error=remark,warn,error -O0 -g -traceback -fpe0 -fltconsistency -stand:f90 -debug full -diag-error-limit=1'
@@ -157,7 +158,7 @@ stats: ## Get some statistics for Daphne
 	cloc $(SRC) --by-percent c
 
 tests: $(SRC)
-	#./preal_checks.py tests.F90
+	./preal_checks.py tests.F90 fail.F90
 	$(FC) $(OFLAG) $(FFLAGS) $(SRC)
 
 %.f90: %.F90 header.F90

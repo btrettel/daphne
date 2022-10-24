@@ -6,13 +6,14 @@ Daphne is (will be) a Fortran library for rigorous data analysis in the physical
 
 Next steps:
 
+- (Maybe) Make `assert`, `error_print`, and `error_stop` not pure as they don't need to be. (I need to figure out how to eliminate the assertions from `is_close_wp` first.)
+- Switch `validate_preal` to work with both scalars and arrays
+- Make `assert_flag` have different scalar and array versions. Set `preal%flag = .true.` for all array elements when condition is not met.
 - Test that the output array has the same dimensions as the input arrays.
 - Test that operations fail if the arrays don't have the same dimensions.
-- Add subroutine to do "Check that preal_array_1 and preal_array_1 have the same dimensions" and "Allocate the output array" in the array operation functions to reduce redundancy.
-- Make `check_flag(condition, flag, filename, line_number)` and `CHECK_FLAG(condition, flag)`, which set `flag` to `true` if the condition is false and do not `stop`, so that I can get higher branch coverage.
-- Add fail2.F90 and fail3.F90 to test assertions with and without line numbers failing and stopping.
-- Add subroutine `check_flag(preal_input, filename, line_number)` to have arguments for the filename and line number.
-- Create `preal_error_flag` type with `dimension`, `lower_bound`, `upper_bound` member variables. Add a `preal_error_flag` type to `preal`.
+- Add fail2.F90 to test `assert` failure.
+- Add fail3.F90 to test `check_flag` failure.
+- Increase branch coverage.
 - Figure out why FPT didn't like the function passing example you made.
 - Alphabetize `use`, `public`, `private`, and `type` statements. In each procedure section, alphabetize the procedures.
 - How can the `intent` be indicated if I pass in a function into a procedure and use an `interface` block to make the function explicit and not `external`? `intent` statement?

@@ -34,7 +34,7 @@ module daphne
     ! 3. Declare parameters
     ! 4. Declare variables
     ! 5. Initialize variables
-    ! 6. Declare operators
+    ! 6. Declare interfaces
     ! 7. Testing procedures
     ! 8. Constructors
     ! 9. Operator functions
@@ -51,6 +51,8 @@ module daphne
     ! ------------------------------------------
     
     public :: assert
+    public :: assert_flag
+    public :: check_flag
     public :: error_stop
     public :: error_print
     public :: is_close_wp
@@ -59,16 +61,19 @@ module daphne
     public :: real_inequality_test
     public :: tests_end
     public :: N
+    private :: check_flag_scalar
+    private :: check_flag_array
     private :: validate_preal
     private :: validate_preal_array
-    private :: padd
-    private :: psubtract
-    private :: pmultiply
-    private :: pdivide
+    private :: padd_scalar
+    private :: psubtract_scalar
+    private :: pmultiply_scalar
+    private :: pdivide_scalar
     private :: padd_array
     private :: psubtract_array
     private :: pmultiply_array
     private :: pdivide_array
+    private :: operation_size_flag
     public :: operator(+)
     public :: operator(-)
     public :: operator(*)
@@ -77,8 +82,7 @@ module daphne
     ! 3. Declare parameters
     ! ---------------------
     
-    ! `wp` stands for "working precision" in case I want to change
-    ! the precision later.
+    ! `wp` stands for "working precision" in case I want to change the precision later.
 #ifndef __DP__
     integer, public, parameter :: wp = selected_real_kind(33, 4931)
 #else
@@ -107,6 +111,7 @@ module daphne
         
         real(kind=wp) :: mean
         real(kind=wp) :: stdev
+        logical       :: flag
         
         ! Why have logical variables for whether the `lower_bound` and `upper_bound` are set if `lower_bound` is set to
         ! `-huge(1._wp)` when `lower_bound_set == .false.` and `upper_bound` is set to `huge(1._wp)` when
@@ -120,8 +125,8 @@ module daphne
 !        real(kind=wp) :: upper_bound
     end type preal
     
-    ! 6. Declare operators
-    ! --------------------
+    ! 6. Declare interfaces
+    ! ---------------------
     
     ! TODO: Declare assignment operator to check if bounds of preal to be assigned to are different than the bounds of the preal
     ! being assigned from. In other words, if the bounds of the preal on the left-hand-side are different from the bounds of preal
@@ -129,48 +134,88 @@ module daphne
     
     interface operator (+) !
         ! Overload the + operator so that it works for preals.
-        module procedure padd, padd_array
+        module procedure padd_scalar, padd_array
     end interface
     
     interface operator (-) !
         ! Overload the - operator so that it works for preals.
-        module procedure psubtract, psubtract_array
+        module procedure psubtract_scalar, psubtract_array
     end interface
     
     interface operator (*) !
         ! Overload the * operator so that it works for preals.
-        module procedure pmultiply, pmultiply_array
+        module procedure pmultiply_scalar, pmultiply_array
     end interface
     
     interface operator (/) !
         ! Overload the / operator so that it works for preals.
-        module procedure pdivide, pdivide_array
+        module procedure pdivide_scalar, pdivide_array
+    end interface
+    
+    interface check_flag !
+        ! Asserts that the flag for the preal scalar or array is not set.
+        module procedure check_flag_scalar, check_flag_array
     end interface
 contains
     ! 7. Testing procedures
     ! ---------------------
     
-    __PURE__ subroutine assert(condition, msg, filename, line_number) !
-        ! Implementation of an assertion subroutine. Unlike in the stdlib, the message is required here.
-        ! Roughly based on check from <https://stdlib.fortran-lang.org/page/specs/stdlib_error.html>.
-        logical, intent(in) :: condition
-        character(len=*), intent(in) :: msg
-        character(len=*), optional, intent(in) :: filename
-        integer(kind=i5), optional, intent(in) :: line_number
-        character(len=5) :: line_str
+    __PURE__ subroutine assert(condition, message, filename, line_number) !
+        ! An assertion subroutine. Roughly based on check from <https://stdlib.fortran-lang.org/page/specs/stdlib_error.html>.
+        ! Unlike in stdlib, the message, filename, and line numbers are required.
+        logical, intent(in)          :: condition
+        character(len=*), intent(in) :: message
+        character(len=*), intent(in) :: filename
+        integer(kind=i5), intent(in) :: line_number
+        character(len=5)             :: line_str
         
 #ifdef __NOTPURE__
-        __OUTERc__ if (.not. condition) then
-            __INNERc__ if (present(filename) .and. present(line_number)) then
-                write(unit=line_str, fmt="(i5)") line_number
-                call error_stop("("//filename//":"//trim(adjustl(line_str))//") ERROR: "//msg)
-            else
-                call error_stop(msg)
-            end if __INNER__
-        end if __OUTER__
+        if (.not. condition) then
+            write(unit=line_str, fmt="(i5)") line_number
+            call error_stop("("//filename//":"//trim(adjustl(line_str))//") ERROR: "//message)
+        end if
 #endif
         return
     end subroutine assert
+    
+    __PURE__ subroutine assert_flag(condition, flag) !
+        ! An assertion subroutine that sets flag to true if the condition is not met.
+        logical, intent(in)     :: condition
+        logical, intent(in out) :: flag
+        
+        if (.not. condition) then
+            flag = .true.
+        end if
+        
+        return
+    end subroutine assert_flag
+    
+    subroutine check_flag_scalar(preal_in, filename, line_number) !
+        ! Asserts that the flag for the preal is not set.
+        ! The flag being set means that an error occurred in a previous calculation.
+        type(preal), intent(in)      :: preal_in
+        character(len=*), intent(in) :: filename
+        integer(kind=i5), intent(in) :: line_number
+        
+        call assert(.not. preal_in%flag, "preal error detected.", filename, line_number)
+        
+        return
+    end subroutine check_flag_scalar
+    
+    subroutine check_flag_array(preal_array_in, filename, line_number) !
+        ! Asserts that the flag for the preal array is not set.
+        ! The flag being set means that an error occurred in a previous calculation.
+        type(preal), dimension(:), intent(in) :: preal_array_in
+        character(len=*), intent(in)          :: filename
+        integer(kind=i5), intent(in)          :: line_number
+        integer(kind=i5)                      :: i
+        
+        do i = lbound(preal_array_in, dim=1), ubound(preal_array_in, dim=1)
+            call assert(.not. preal_array_in(i)%flag, "preal error detected.", filename, line_number)
+        end do
+        
+        return
+    end subroutine check_flag_array
     
     __PURE__ subroutine error_stop(msg) !
         ! Stops execution and prints error message.
@@ -220,39 +265,55 @@ contains
     __PURE__ subroutine validate_preal(preal_in) !
         ! Check that a preal is plausible.
         
-        type(preal), intent(in) :: preal_in
+        type(preal), intent(in out) :: preal_in
         
-#ifdef __NOTPURE__
-!        call assert(preal_in%preal_id > 0_intk, "preal_id not greater than zero.")
+        ! preal_id must be greater than zero.
+!        call assert_flag(preal_in%preal_id > 0_intk, preal_in%flag)
         
-!        call assert(preal_in%preal_id <= number_of_preals, "preal_id not less than or equal to the number of preals.")
+        ! preal_id must be less than or equal to the number of preals
+!        call assert_flag(preal_in%preal_id <= number_of_preals, preal_in%flag)
         
-        call assert(preal_in%stdev > 0.0_wp, "Standard deviation not greater than zero.")
+        ! The standard deviation must be greater than zero.
+        call assert_flag(preal_in%stdev > 0.0_wp, preal_in%flag)
         
+        ! The mean must be greater than or equal to the lower bound.
 !        if (preal_in%lower_bound_set) then
-!            call assert(preal_in%mean >= preal_in%lower_bound, "Mean not greater than lower bound.")
+!            call assert_flag(preal_in%mean >= preal_in%lower_bound, preal_in%flag)
 !        end if
         
+        ! The mean must be less than or equal to the lower bound.
 !        if (preal_in%upper_bound_set) then
-!            call assert(preal_in%mean <= preal_in%upper_bound, "Mean not less than upper bound.")
+!            call assert_flag(preal_in%mean <= preal_in%upper_bound, preal_in%flag)
 !        end if
-#endif
+        
         return
     end subroutine validate_preal
     
     __PURE__ subroutine validate_preal_array(preal_array_in) !
         ! Check that a preal array is plausible.
         
-        type(preal), dimension(:), intent(in) :: preal_array_in
-#ifdef __NOTPURE__
+        type(preal), dimension(:), intent(in out) :: preal_array_in
         integer(kind=i5) :: i
         
         do i = lbound(preal_array_in, dim=1), ubound(preal_array_in, dim=1)
             call validate_preal(preal_array_in(i))
         end do
-#endif
+        
         return
     end subroutine validate_preal_array
+    
+    __PURE__ subroutine operation_size_flag(preal_array_1, preal_array_2, preal_array_out) !
+        ! Check that preal_array_1 and preal_array_2 have the same dimensions.
+        type(preal), dimension(:), intent(in) :: preal_array_1, preal_array_2
+        type(preal), dimension(:), intent(in out) :: preal_array_out
+        
+        call assert_flag(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), &
+                preal_array_out(lbound(preal_array_1, dim=1))%flag)
+        call assert_flag(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), &
+                preal_array_out(lbound(preal_array_1, dim=1))%flag)
+        
+        return
+    end subroutine operation_size_flag
     
     function is_close_wp(input_real_1, input_real_2, rel_tol, abs_tol) !
         ! Determine whether two reals are close.
@@ -263,16 +324,16 @@ contains
         logical :: is_close_wp
         
         if (present(rel_tol)) then
-            call assert(rel_tol >= 0.0_wp, "Set relative tolerance to zero or greater.")
+            call ASSERT(rel_tol >= 0.0_wp, "Set relative tolerance to zero or greater.")
             rel_tol_set = rel_tol
         else
             rel_tol_set = 10.0_wp * epsilon(1.0_wp)
-            call assert(rel_tol_set > 0.0_wp, "Default relative tolerance not greater than zero.")
-            call assert(rel_tol_set < 0.0001_wp, "Default relative tolerance not particularly small.")
+            call ASSERT(rel_tol_set > 0.0_wp, "Default relative tolerance not greater than zero.")
+            call ASSERT(rel_tol_set < 0.0001_wp, "Default relative tolerance not particularly small.")
         end if
         
         if (present(abs_tol)) then
-            call assert(abs_tol >= 0.0_wp, "Set absolute tolerance to zero or greater.")
+            call ASSERT(abs_tol >= 0.0_wp, "Set absolute tolerance to zero or greater.")
             abs_tol_set = abs_tol
         else
             abs_tol_set = 10.0_wp * epsilon(1.0_wp)
@@ -280,7 +341,7 @@ contains
         
         tol = max(rel_tol_set * abs(input_real_1), rel_tol_set * abs(input_real_2), abs_tol_set)
         
-        call assert(tol > 0.0_wp, "Tolerance not greater than zero.")
+        call ASSERT(tol > 0.0_wp, "Tolerance not greater than zero.")
         
         if (abs(input_real_1 - input_real_2) < tol) then
             is_close_wp = .true.
@@ -327,10 +388,11 @@ contains
         character(len=*), intent(in) :: msg
         integer(kind=i5), intent(in out) :: number_of_failures
         
-        write(unit=*, fmt="(a, e15.8)") "  returned:", program_real
+        write(unit=*, fmt="(a, es15.8)") "  returned:", program_real
         write(unit=*, fmt="(a, es15.8)") "  expected:", expected_real
         write(unit=*, fmt="(a, es15.8)") "difference:", abs(program_real - expected_real)
         call logical_test(.not. is_close_wp(program_real, expected_real), msg, number_of_failures)
+        
         return
     end subroutine real_inequality_test
     
@@ -345,6 +407,7 @@ contains
         else
             write(unit=*, fmt=*) "All tests passed."
         end if
+        
         return
     end subroutine tests_end
     
@@ -362,6 +425,7 @@ contains
         !preal_out%preal_id = number_of_preals
         preal_out%mean     = mean
         preal_out%stdev    = stdev
+        preal_out%flag     = .false.
         
 !        if (present(lower_bound)) then
 !            preal_out%lower_bound_set = .true.
@@ -381,57 +445,61 @@ contains
     ! 9a. preal scalars
     ! -----------------
     
-    function padd(preal_1, preal_2) result(preal_out) !
+    function padd_scalar(preal_1, preal_2) result(preal_out) !
         ! Adds two preal scalars.
         
         type(preal), intent(in) :: preal_1, preal_2
         type(preal) :: preal_out
         
+        preal_out%flag = .false.
         preal_out%mean = preal_1%mean + preal_2%mean
         preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
         
         call validate_preal(preal_out)
         return
-    end function padd
+    end function padd_scalar
     
-    function psubtract(preal_1, preal_2) result(preal_out) !
+    function psubtract_scalar(preal_1, preal_2) result(preal_out) !
         ! Subtracts two preal scalars.
         
         type(preal), intent(in) :: preal_1, preal_2
         type(preal) :: preal_out
         
+        preal_out%flag = .false.
         preal_out%mean = preal_1%mean - preal_2%mean
         preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
         
         call validate_preal(preal_out)
         return
-    end function psubtract
+    end function psubtract_scalar
     
-    function pmultiply(preal_1, preal_2) result(preal_out) !
+    function pmultiply_scalar(preal_1, preal_2) result(preal_out) !
         ! Multiplies two preal scalars.
         
         type(preal), intent(in) :: preal_1, preal_2
         type(preal) :: preal_out
         
+        preal_out%flag = .false.
         preal_out%mean = preal_1%mean * preal_2%mean
         preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
         
         call validate_preal(preal_out)
         return
-    end function pmultiply
+    end function pmultiply_scalar
     
-    function pdivide(preal_1, preal_2) result(preal_out) !
+    function pdivide_scalar(preal_1, preal_2) result(preal_out) !
         ! Divides two preal scalars.
         
         type(preal), intent(in) :: preal_1, preal_2
         type(preal) :: preal_out
         
+        preal_out%flag = .false.
         preal_out%mean = preal_1%mean / preal_2%mean
         preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
         
         call validate_preal(preal_out)
         return
-    end function pdivide
+    end function pdivide_scalar
     
     ! 9b. preal arrays
     ! ----------------
@@ -442,21 +510,13 @@ contains
         type(preal), dimension(:), intent(in) :: preal_array_1
         type(preal), dimension(:), intent(in) :: preal_array_2
         type(preal), dimension(size(preal_array_1)) :: preal_array_out
-        integer(kind=i5) :: i, lower_index, upper_index
+        integer(kind=i5) :: i
         
-        ! Check that preal_array_1 and preal_array_1 have the same dimensions.
-        call assert(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "padd_array: lower array bound mismatch")
-        call assert(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "padd_array: upper array bound mismatch")
-        
-        ! Allocate the output array.
-        
-        lower_index = lbound(preal_array_1, dim=1)
-        upper_index = ubound(preal_array_1, dim=1)
-        
-        do i = lower_index, upper_index
+        do i = lbound(preal_array_1, dim=1), ubound(preal_array_1, dim=1)
             preal_array_out(i) = preal_array_1(i) + preal_array_2(i)
         end do
         
+        call operation_size_flag(preal_array_1, preal_array_2, preal_array_out)
         call validate_preal_array(preal_array_out)
         return
     end function padd_array
@@ -467,21 +527,13 @@ contains
         type(preal), dimension(:), intent(in) :: preal_array_1
         type(preal), dimension(:), intent(in) :: preal_array_2
         type(preal), dimension(size(preal_array_1)) :: preal_array_out
-        integer(kind=i5) :: i, lower_index, upper_index
+        integer(kind=i5) :: i
         
-        ! Check that preal_array_1 and preal_array_1 have the same dimensions.
-        call assert(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "psubtract_array: lower array bound mismatch")
-        call assert(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "psubtract_array: upper array bound mismatch")
-        
-        ! Allocate the output array.
-        
-        lower_index = lbound(preal_array_1, dim=1)
-        upper_index = ubound(preal_array_1, dim=1)
-        
-        do i = lower_index, upper_index
+        do i = lbound(preal_array_1, dim=1), ubound(preal_array_1, dim=1)
             preal_array_out(i) = preal_array_1(i) - preal_array_2(i)
         end do
         
+        call operation_size_flag(preal_array_1, preal_array_2, preal_array_out)
         call validate_preal_array(preal_array_out)
         return
     end function psubtract_array
@@ -492,21 +544,13 @@ contains
         type(preal), dimension(:), intent(in) :: preal_array_1
         type(preal), dimension(:), intent(in) :: preal_array_2
         type(preal), dimension(size(preal_array_1)) :: preal_array_out
-        integer(kind=i5) :: i, lower_index, upper_index
+        integer(kind=i5) :: i
         
-        ! Check that preal_array_1 and preal_array_1 have the same dimensions.
-        call assert(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "pmultiply_array: lower array bound mismatch")
-        call assert(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "pmultiply_array: upper array bound mismatch")
-        
-        ! Allocate the output array.
-        
-        lower_index = lbound(preal_array_1, dim=1)
-        upper_index = ubound(preal_array_1, dim=1)
-        
-        do i = lower_index, upper_index
+        do i = lbound(preal_array_1, dim=1), ubound(preal_array_1, dim=1)
             preal_array_out(i) = preal_array_1(i) * preal_array_2(i)
         end do
         
+        call operation_size_flag(preal_array_1, preal_array_2, preal_array_out)
         call validate_preal_array(preal_array_out)
         return
     end function pmultiply_array
@@ -517,21 +561,13 @@ contains
         type(preal), dimension(:), intent(in) :: preal_array_1
         type(preal), dimension(:), intent(in) :: preal_array_2
         type(preal), dimension(size(preal_array_1)) :: preal_array_out
-        integer(kind=i5) :: i, lower_index, upper_index
+        integer(kind=i5) :: i
         
-        ! Check that preal_array_1 and preal_array_1 have the same dimensions.
-        call assert(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), "pdivide_array: lower array bound mismatch")
-        call assert(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), "pdivide_array: upper array bound mismatch")
-        
-        ! Allocate the output array.
-        
-        lower_index = lbound(preal_array_1, dim=1)
-        upper_index = ubound(preal_array_1, dim=1)
-        
-        do i = lower_index, upper_index
+        do i = lbound(preal_array_1, dim=1), ubound(preal_array_1, dim=1)
             preal_array_out(i) = preal_array_1(i) / preal_array_2(i)
         end do
         
+        call operation_size_flag(preal_array_1, preal_array_2, preal_array_out)
         call validate_preal_array(preal_array_out)
         return
     end function pdivide_array

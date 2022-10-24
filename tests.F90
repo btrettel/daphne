@@ -24,7 +24,8 @@ program tests
     ! 4a. Testing procedures
     ! 4b. Constructors
     ! 4c. Operators
-    ! 5. Final result
+    ! 5. Check all preal flags
+    ! 6. Final result
     
     ! 1. Set modules and other boilerplate
     ! ------------------------------------
@@ -266,7 +267,17 @@ program tests
     
     ! TODO: checking number_of_preals and preal_id for each operator
     
-    ! 5. Final result
+    ! 5. Check all preal flags
+    ! ------------------------
+    
+    call CHECK_FLAG(x)
+    call CHECK_FLAG(y)
+    call CHECK_FLAG(z)
+    call CHECK_FLAG(array_1)
+    call CHECK_FLAG(array_2)
+    call CHECK_FLAG(array_3)
+    
+    ! 6. Final result
     ! ---------------
     
     call tests_end(number_of_failures)
