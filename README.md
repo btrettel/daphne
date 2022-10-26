@@ -6,6 +6,11 @@ Daphne is (will be) a Fortran library for rigorous data analysis in the physical
 
 Next steps:
 
+- Make `is_close` with different functions for different types of reals.
+- Make `~=` operator for different types of reals with default tolerances.
+    - <https://www.reddit.com/r/fortran/comments/ixnj5p/best_practices_for_comparing_reals/>
+- Tests for propagation of flags. If mathematical operation is performed, flag must be propagated to output.
+- Add tests for boundary of `is_close_wp`. <https://jasonrudolph.com/blog/2008/07/01/testing-anti-patterns-overspecification/>
 - (Maybe) Make `assert`, `error_print`, and `error_stop` not pure as they don't need to be. (I need to figure out how to eliminate the assertions from `is_close_wp` first.)
 - Switch `validate_preal` to work with both scalars and arrays
 - Make `assert_flag` have different scalar and array versions. Set `preal%flag = .true.` for all array elements when condition is not met.
@@ -31,6 +36,7 @@ Later:
 
 - Linear regression considering uncertainties for uncorrelated variables.
 - Add correlation for uncertainty propagation and regression.
+- Property testing for code
 - Mutation testing for code
     - Getting started: Pick a random line. Change one thing about this line.
 - Fuzz testing for inputs

@@ -74,6 +74,7 @@ module daphne
     private :: pmultiply_array
     private :: pdivide_array
     private :: operation_size_flag
+    private :: operation_input_flag
     public :: operator(+)
     public :: operator(-)
     public :: operator(*)
@@ -315,6 +316,21 @@ contains
         return
     end subroutine operation_size_flag
     
+    function operation_input_flag(preal_1, preal_2) !
+        ! If any input preal flag is `.true.`, set the output preal flag to `.true.`.
+        ! Otherwise set the output preal flag to `.false.`.
+        type(preal), intent(in) :: preal_1, preal_2
+        logical :: operation_input_flag
+        
+        if (preal_1%flag .or. preal_2%flag) then
+            operation_input_flag = .true.
+        else
+            operation_input_flag = .false.
+        end if
+        
+        return
+    end function operation_input_flag
+    
     function is_close_wp(input_real_1, input_real_2, rel_tol, abs_tol) !
         ! Determine whether two reals are close.
         
@@ -451,7 +467,7 @@ contains
         type(preal), intent(in) :: preal_1, preal_2
         type(preal) :: preal_out
         
-        preal_out%flag = .false.
+        preal_out%flag = operation_input_flag(preal_1, preal_2)
         preal_out%mean = preal_1%mean + preal_2%mean
         preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
         
@@ -465,7 +481,7 @@ contains
         type(preal), intent(in) :: preal_1, preal_2
         type(preal) :: preal_out
         
-        preal_out%flag = .false.
+        preal_out%flag = operation_input_flag(preal_1, preal_2)
         preal_out%mean = preal_1%mean - preal_2%mean
         preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
         
@@ -479,7 +495,7 @@ contains
         type(preal), intent(in) :: preal_1, preal_2
         type(preal) :: preal_out
         
-        preal_out%flag = .false.
+        preal_out%flag = operation_input_flag(preal_1, preal_2)
         preal_out%mean = preal_1%mean * preal_2%mean
         preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
         
@@ -493,7 +509,7 @@ contains
         type(preal), intent(in) :: preal_1, preal_2
         type(preal) :: preal_out
         
-        preal_out%flag = .false.
+        preal_out%flag = operation_input_flag(preal_1, preal_2)
         preal_out%mean = preal_1%mean / preal_2%mean
         preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
         

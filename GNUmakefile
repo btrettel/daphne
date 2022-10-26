@@ -5,6 +5,7 @@
 
 # TODO: <https://github.com/llvm/llvm-project/tree/main/flang/#building-flang-standalone>
 # TODO: make commit to run lint, coverage, and check before making a commit.
+# TODO: https://github.com/MetOffice/stylist
 
 FC          := gfortran
 FFLAGS      := -cpp -D__GIT__=\"$(shell git rev-parse HEAD)\" -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f95 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-logical=true -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-132 -fimplicit-none
