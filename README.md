@@ -4,11 +4,31 @@ Status: under development; almost nothing works yet
 
 Daphne is (will be) a Fortran library for rigorous data analysis in the physical sciences. Dimensional analysis will prevent many potential bugs, and uncertainty propagation will reveal the limits of what can be understood from the data. Daphne prioritizes correctness over speed, so this library is not intended for HPC.
 
+Target features for first significant version:
+
+- testing
+- reading CSV files
+- dimensional analysis
+- first-order uncertainty propagation without covariance
+- 2D plotting
+- regression
+
 Next steps:
 
-- Make `is_close` with different functions for different types of reals.
+- see which compilers support `use` `only` in Fortran.
+- Get Daphne to compile with LFortran by adding preprocessor directives.
+- Add optional file and line arguments for `is_close_wp` and add an associated preprocessor macro to automatically include the file and line number.
+- Implement `legacy_iso_fortran_env` as a substitute for `iso_fortran_env` for older compilers.
+    - If I make `error_unit` a preprocessor macro then I can make it `*` for ELF90. Does `unit='*'` work, though? I could make the unit a string in ELF90 in that case, which would avoid the preprocessor. Or does ELF90 accept `unit=0`? That might work too.
+    - If a preprocessor directive for Fortran 2003 is present, make `error_unit` come from the standard approach for Fortran 2003.
+    - Would it be better to set `error_unit = -1` for ELF90 and Microsoft Fortran Powerstation 4.0? I could have a preprocessor directive `__NOSTDERR__` to write stderr to stdout to override.
+    - Have tests for all compilers for these "legacy" modules.
+- Make generic `is_close` with different functions for different types of reals.
 - Make `~=` operator for different types of reals with default tolerances.
     - <https://www.reddit.com/r/fortran/comments/ixnj5p/best_practices_for_comparing_reals/>
+    - <http://www.lahey.com/float.htm
+        - > A better technique is to compare the absolute value of the difference of two numbers with an appropriate epsilon to get relations like approximately equal, definitely greater than, etc.
+        - Make `~>` and `~<` operators for definitely greater than and definitely less than.
 - Tests for propagation of flags. If mathematical operation is performed, flag must be propagated to output.
 - Add tests for boundary of `is_close_wp`. <https://jasonrudolph.com/blog/2008/07/01/testing-anti-patterns-overspecification/>
 - (Maybe) Make `assert`, `error_print`, and `error_stop` not pure as they don't need to be. (I need to figure out how to eliminate the assertions from `is_close_wp` first.)
@@ -20,6 +40,7 @@ Next steps:
 - Add fail3.F90 to test `check_flag` failure.
 - Increase branch coverage.
 - Figure out why FPT didn't like the function passing example you made.
+    - /home/ben/archives/dated/2022/10/2022-10-11/function_argument/function_argument_elf90.f90
 - Alphabetize `use`, `public`, `private`, and `type` statements. In each procedure section, alphabetize the procedures.
 - How can the `intent` be indicated if I pass in a function into a procedure and use an `interface` block to make the function explicit and not `external`? `intent` statement?
 - Make array operators work in 2D arrays.

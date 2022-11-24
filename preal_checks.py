@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+# # $File$
+# 
+# Summary: verifies that all preals declared have associated checks
+# Author: Ben Trettel (<http://trettel.us/>)
+# Last updated: $Date$
+# Revision: $Revision$
+# Project: [Daphne](https://github.com/btrettel/daphne)
+# License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
+
 import argparse
 import sys
 

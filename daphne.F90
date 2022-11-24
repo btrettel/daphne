@@ -1,8 +1,9 @@
-! daphne.F90 - module for uncertain dimensioned variables
-! =======================================================
+! # $File$
 ! 
+! Summary: Library for rigorous data analysis in the physical sciences with uncertainty propagation and dimensional analysis.
 ! Author: Ben Trettel (<http://trettel.us/>)
-! Last updated: 2022-10-23
+! Last updated: $Date$
+! Revision: $Revision$
 ! Project: [Daphne](https://github.com/btrettel/daphne)
 ! License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
 
@@ -12,9 +13,7 @@ module daphne
     ! Summary
     ! -------
     ! 
-    ! Daphne is a Fortran library for rigorous data analysis in the physical sciences. Dimensional analysis will prevent many
-    ! potential bugs, and uncertainty propagation will reveal the limits of what can be understood from the data. Daphne
-    ! prioritizes correctness over speed, so this library is not intended for HPC.
+    ! 
     ! 
     ! To use Daphne, create a variable of type `preal`:
     ! 

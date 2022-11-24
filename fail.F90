@@ -1,19 +1,15 @@
-! fail.f90 - check that assert(.false.) stops
-! ===========================================
+! # $File$
 ! 
+! Summary: Test to make sure that assert(.false.) stops the program with an error.
 ! Author: Ben Trettel (<http://trettel.us/>)
-! Last updated: 2022-10-23
+! Last updated: $Date$
+! Revision: $Revision$
 ! Project: [Daphne](https://github.com/btrettel/daphne)
 ! License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
 
 #include "header.F90"
 
 program fail
-    ! Summary
-    ! -------
-    ! 
-    ! Test to make sure that assert(.false.) stops the program with an error.
-    ! 
     ! Table of contents
     ! -----------------
     ! 

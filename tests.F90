@@ -1,19 +1,15 @@
-! tests.f90 - tests for Daphne
-! ============================
+! # $File$
 ! 
+! Summary: Tests for all operators and procedures in Daphne.
 ! Author: Ben Trettel (<http://trettel.us/>)
-! Last updated: 2022-10-23
+! Last updated: $Date$
+! Revision: $Revision$
 ! Project: [Daphne](https://github.com/btrettel/daphne)
 ! License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
 
 #include "header.F90"
 
 program tests
-    ! Summary
-    ! -------
-    ! 
-    ! Tests for all operators and procedures in Daphne.
-    ! 
     ! Table of contents
     ! -----------------
     ! 
@@ -24,8 +20,9 @@ program tests
     ! 4a. Testing procedures
     ! 4b. Constructors
     ! 4c. Operators
-    ! 5. Check all preal flags
-    ! 6. Final result
+    ! 5. Test flagging
+    ! 6. Check all preal flags
+    ! 7. Final result
     
     ! 1. Set modules and other boilerplate
     ! ------------------------------------
@@ -36,8 +33,8 @@ program tests
     ! 2. Declare variables
     ! --------------------
     
-    type(preal) :: x, y, z
-    type(preal), dimension(3) :: array_1, array_2, array_3
+    type(preal) :: x, y, z, flagged_scalar
+    type(preal), dimension(3) :: array_1, array_2, array_3, flagged_array
     integer(kind=i5) :: number_of_failures
     
     ! 3. Initialize variables
@@ -267,7 +264,13 @@ program tests
     
     ! TODO: checking number_of_preals and preal_id for each operator
     
-    ! 5. Check all preal flags
+    ! 5. Test flagging
+    ! ----------------
+    
+    ! flagged_scalar
+    ! flagged_array
+    
+    ! 6. Check all preal flags
     ! ------------------------
     
     call CHECK_FLAG(x)
@@ -277,7 +280,7 @@ program tests
     call CHECK_FLAG(array_2)
     call CHECK_FLAG(array_3)
     
-    ! 6. Final result
+    ! 7. Final result
     ! ---------------
     
     call tests_end(number_of_failures)

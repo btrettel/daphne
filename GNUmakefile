@@ -1,4 +1,11 @@
-# GNU Makefile for Daphne
+# # $File$
+# 
+# Summary: GNU Makefile for Daphne
+# Author: Ben Trettel (<http://trettel.us/>)
+# Last updated: $Date$
+# Revision: $Revision$
+# Project: [Daphne](https://github.com/btrettel/daphne)
+# License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
 
 # <https://innolitics.com/articles/make-delete-on-error/>
 .DELETE_ON_ERROR:
@@ -6,6 +13,8 @@
 # TODO: <https://github.com/llvm/llvm-project/tree/main/flang/#building-flang-standalone>
 # TODO: make commit to run lint, coverage, and check before making a commit.
 # TODO: https://github.com/MetOffice/stylist
+# TODO: Compile with gfortran for both `-std=f95` and `-std=f2003`. Do something similar for ifort and ifx.
+# TODO: Convert to fixed format with findent, run through SPAG.
 
 FC          := gfortran
 FFLAGS      := -cpp -D__GIT__=\"$(shell git rev-parse HEAD)\" -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f95 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-logical=true -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-132 -fimplicit-none
@@ -65,6 +74,7 @@ elf90: ## Compile Daphne and run tests for ELF90
 # /home/ben/.wine/drive_c/ELF9040/Bin/dosstyle.dll
 # /home/ben/.wine/drive_c/ELF9040/Bin/tnt.exe
 # /home/ben/.wine/drive_c/ELF9040/Bin/vmm.exp
+# TODO: Update ORUN for elf90_dos.
 .PHONY: elf90_dos
 elf90_dos: ## Compile Daphne for ELF90 in DOS
 	make tests FC='wine elf90' FFLAGS='-npause -fullwarn -nwin' OBIN='tests.exe' OFLAG='-out tests.exe' ORUN='wine tests.exe && test ! -f error.log' FPPFLAGS='-D__ELF90__ -D__DP__ -D__GIT__=\"$(shell git rev-parse HEAD)\"' SRC='daphne.f90 tests.f90'
@@ -149,7 +159,7 @@ clean: ## Remove compiled binaries and debugging files
 # FPT spacing warnings are suppressed because ELP90 wants `in out` to have a space, but FPT doesn't like that. FPT prints a message that errors have been suppressed. That's somewhat annoying. Using `%"no warnings for spacing"` instead doesn't have that message. I prefer having cleaner output. I used that approach for a while until I ran into another problem that FPT doesn't like and I had to disable that message too.
 # 3437: FPT seems to think that (for example) `rel_tol_set = 10.0_wp*EPSILON(1.0_wp)` is a "Mixed real or complex sizes in expression - loss of precision", but it's not. `epsilon` returns the same kind as its argument. This sort of problem seems better detected by the other compilers, so I'm okay with disabling this message.
 lint: $(SRC_ALL_FPP) $(SRC_ALL) ## Run linters on Daphne
-	$(foreach source_file,$(SRC_ALL_FPP),echo ; echo $(source_file):; flint lint --flintrc /home/ben/.local/share/flint/fortran.yaml $(source_file);)
+	$(foreach source_file,$(SRC_ALL_FPP),echo ; echo $(source_file):; flint lint --flintrc /home/ben/.local/share/flint/f90.yaml $(source_file);)
 	-icode-wrapper.py $(SRC_ALL_FPP)
 	rm -fv *.FPT *.FPI *.fpl
 	fpt $(SRC_ALL) %"suppress error 1867 2185 3425 3437"
