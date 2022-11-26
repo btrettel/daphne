@@ -15,6 +15,7 @@ Target features for first significant version:
 
 Next steps:
 
+- Add to Daphne's preal type a member variable for whether the value was set, in order to catch uninitialized preals. This is .false. by default and set to .true. when a constructor is used. It will be checked by the same verification procedure used for the flag.
 - see which compilers support `use` `only` in Fortran.
 - Get Daphne to compile with LFortran by adding preprocessor directives.
 - Add optional file and line arguments for `is_close_wp` and add an associated preprocessor macro to automatically include the file and line number.

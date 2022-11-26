@@ -33,8 +33,8 @@ program tests
     ! 2. Declare variables
     ! --------------------
     
-    type(preal) :: x, y, z, flagged_scalar
-    type(preal), dimension(3) :: array_1, array_2, array_3, flagged_array
+    type(preal) :: x, y, z ! flagged_scalar
+    type(preal), dimension(3) :: array_1, array_2, array_3 ! flagged_array
     integer(kind=i5) :: number_of_failures
     
     ! 3. Initialize variables
@@ -45,7 +45,7 @@ program tests
     ! 4. Tests
     ! --------
     
-    write(unit=*, fmt=*) "Git revision number: ", __GIT__
+    write(unit=*, fmt=*) "Git revision number: $Revision$"
     
     ! 4a. Testing procedures
     
@@ -63,7 +63,7 @@ program tests
     
     call logical_test(__LINE__ > 0, "preprocessor line number", number_of_failures)
     
-    call logical_test(len(__GIT__) == 40, "Git revision number", number_of_failures)
+    !call logical_test(len(__GIT__) == 40, "Git revision number", number_of_failures)
     
     call logical_test(is_close_wp(1.0_wp, 1.0_wp), "is_close_wp, identical numbers (1)", number_of_failures)
     

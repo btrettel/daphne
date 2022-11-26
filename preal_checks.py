@@ -38,6 +38,7 @@ for filename in filename_list:
         continued = False
         while line:
             line = line.replace('\n', '').strip()
+            line = line.split("!")[0]
             
             if continued:
                 line = old_line + line
