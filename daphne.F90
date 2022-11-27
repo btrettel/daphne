@@ -10,10 +10,8 @@
 #include "header.F90"
 
 module daphne
-    ! Summary
-    ! -------
-    ! 
-    ! 
+    ! Usage
+    ! -----
     ! 
     ! To use Daphne, create a variable of type `preal`:
     ! 
@@ -43,6 +41,9 @@ module daphne
     ! 1. Set modules and other boilerplate
     ! ------------------------------------
     
+#ifndef __FTN95__
+    use, intrinsic :: iso_fortran_env, only: error_unit
+#endif
     implicit none
     private
     
@@ -60,20 +61,6 @@ module daphne
     public :: real_inequality_test
     public :: tests_end
     public :: N
-    private :: check_flag_scalar
-    private :: check_flag_array
-    private :: validate_preal
-    private :: validate_preal_array
-    private :: padd_scalar
-    private :: psubtract_scalar
-    private :: pmultiply_scalar
-    private :: pdivide_scalar
-    private :: padd_array
-    private :: psubtract_array
-    private :: pmultiply_array
-    private :: pdivide_array
-    private :: operation_size_flag
-    private :: operation_input_flag
     public :: operator(+)
     public :: operator(-)
     public :: operator(*)
@@ -91,6 +78,10 @@ module daphne
     
     ! Kind number for integers.
     integer, public, parameter :: i5 = selected_int_kind(5)
+    
+#ifdef __FTN95__
+    integer, public, parameter :: error_unit = 0
+#endif
     
     ! 4. Declare variables
     ! --------------------
@@ -160,7 +151,7 @@ contains
     ! 7. Testing procedures
     ! ---------------------
     
-    __PURE__ subroutine assert(condition, message, filename, line_number) !
+    subroutine assert(condition, message, filename, line_number) !
         ! An assertion subroutine. Roughly based on check from <https://stdlib.fortran-lang.org/page/specs/stdlib_error.html>.
         ! Unlike in stdlib, the message, filename, and line numbers are required.
         logical, intent(in)          :: condition
@@ -169,25 +160,20 @@ contains
         integer(kind=i5), intent(in) :: line_number
         character(len=5)             :: line_str
         
-#ifdef __NOTPURE__
         if (.not. condition) then
             write(unit=line_str, fmt="(i5)") line_number
             call error_stop("("//filename//":"//trim(adjustl(line_str))//") ERROR: "//message)
         end if
-#endif
-        return
     end subroutine assert
     
-    __PURE__ subroutine assert_flag(condition, flag) !
+    subroutine assert_flag(condition, flag) !
         ! An assertion subroutine that sets flag to true if the condition is not met.
         logical, intent(in)     :: condition
-        logical, intent(in out) :: flag
+        logical, intent(inout) :: flag
         
         if (.not. condition) then
             flag = .true.
         end if
-        
-        return
     end subroutine assert_flag
     
     subroutine check_flag_scalar(preal_in, filename, line_number) !
@@ -198,8 +184,6 @@ contains
         integer(kind=i5), intent(in) :: line_number
         
         call assert(.not. preal_in%flag, "preal error detected.", filename, line_number)
-        
-        return
     end subroutine check_flag_scalar
     
     subroutine check_flag_array(preal_array_in, filename, line_number) !
@@ -213,59 +197,27 @@ contains
         do i = lbound(preal_array_in, dim=1), ubound(preal_array_in, dim=1)
             call assert(.not. preal_array_in(i)%flag, "preal error detected.", filename, line_number)
         end do
-        
-        return
     end subroutine check_flag_array
     
-    __PURE__ subroutine error_stop(msg) !
+    subroutine error_stop(msg) !
         ! Stops execution and prints error message.
         character(len=*), intent(in) :: msg
         
-#ifdef __NOTPURE__
         call error_print(msg)
-#ifndef __ELF90__
         stop 1
-#else
-        stop
-#endif
-#endif
     end subroutine error_stop
     
-    __PURE__ subroutine error_print(msg) !
+    subroutine error_print(msg) !
         ! Prints error message.
         character(len=*), intent(in) :: msg
-#ifdef __NOTPURE__
-        ! Not fully portable as a portable approach requires Fortran 2003. <https://stackoverflow.com/a/8508757/1124489>
-        ! But the Oracle compiler doesn't have this as of 2022-10-01! So I'm using the non-portable approach.
-        integer(kind=i5), parameter :: error_unit = 0
         
-#ifndef __ELF90__
         write(unit=error_unit, fmt=*) msg
-#else
-        ! ELF90 will compile if `write(unit=error_unit, fmt=*) msg` is used by itself, but the following error will appear at
-        ! runtime:
-        ! > No file connected to unit (see "Input/Output" in the Essential Lahey Fortran 90 Reference).
-        ! So as far as I can tell, ELF90 can only write to stdout. So I write error messages to stdout and an error log file. Since
-        ! ELF90 can't have non-zero exit codes, the error log is how I tell whether the tests succeeded or failed.
-        integer(kind=i5) :: i
-        
-        open(unit=error_unit, file="error.log", status="replace", iostat=i, position="append")
-        if (i /= 0) then
-            write(unit=*, fmt=*) "Can't open error log."
-            stop
-        end if
-        write(unit=*, fmt=*) msg
-        write(unit=error_unit, fmt=*) msg
-        close(error_unit)
-#endif
-#endif
-        return
     end subroutine error_print
     
-    __PURE__ subroutine validate_preal(preal_in) !
+    subroutine validate_preal(preal_in) !
         ! Check that a preal is plausible.
         
-        type(preal), intent(in out) :: preal_in
+        type(preal), intent(inout) :: preal_in
         
         ! preal_id must be greater than zero.
 !        call assert_flag(preal_in%preal_id > 0_intk, preal_in%flag)
@@ -285,34 +237,28 @@ contains
 !        if (preal_in%upper_bound_set) then
 !            call assert_flag(preal_in%mean <= preal_in%upper_bound, preal_in%flag)
 !        end if
-        
-        return
     end subroutine validate_preal
     
-    __PURE__ subroutine validate_preal_array(preal_array_in) !
+    subroutine validate_preal_array(preal_array_in) !
         ! Check that a preal array is plausible.
         
-        type(preal), dimension(:), intent(in out) :: preal_array_in
+        type(preal), dimension(:), intent(inout) :: preal_array_in
         integer(kind=i5) :: i
         
         do i = lbound(preal_array_in, dim=1), ubound(preal_array_in, dim=1)
             call validate_preal(preal_array_in(i))
         end do
-        
-        return
     end subroutine validate_preal_array
     
-    __PURE__ subroutine operation_size_flag(preal_array_1, preal_array_2, preal_array_out) !
+    subroutine operation_size_flag(preal_array_1, preal_array_2, preal_array_out) !
         ! Check that preal_array_1 and preal_array_2 have the same dimensions.
         type(preal), dimension(:), intent(in) :: preal_array_1, preal_array_2
-        type(preal), dimension(:), intent(in out) :: preal_array_out
+        type(preal), dimension(:), intent(inout) :: preal_array_out
         
         call assert_flag(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), &
                 preal_array_out(lbound(preal_array_1, dim=1))%flag)
         call assert_flag(ubound(preal_array_1, dim=1) == ubound(preal_array_2, dim=1), &
                 preal_array_out(lbound(preal_array_1, dim=1))%flag)
-        
-        return
     end subroutine operation_size_flag
     
     function operation_input_flag(preal_1, preal_2) !
@@ -326,8 +272,6 @@ contains
         else
             operation_input_flag = .false.
         end if
-        
-        return
     end function operation_input_flag
     
     function is_close_wp(input_real_1, input_real_2, rel_tol, abs_tol) !
@@ -363,7 +307,6 @@ contains
         else
             is_close_wp = .false.
         end if
-        return
     end function is_close_wp
     
     subroutine logical_test(condition, msg, number_of_failures) !
@@ -371,7 +314,7 @@ contains
         
         logical, intent(in) :: condition
         character(len=*), intent(in) :: msg
-        integer(kind=i5), intent(in out) :: number_of_failures
+        integer(kind=i5), intent(inout) :: number_of_failures
         
         if (condition) then
             write(unit=*, fmt=*) "pass: "//msg
@@ -379,7 +322,6 @@ contains
             call error_print("fail: "//msg)
             number_of_failures = number_of_failures + 1
         end if
-        return
     end subroutine logical_test
     
     subroutine real_equality_test(program_real, expected_real, msg, number_of_failures) !
@@ -387,13 +329,12 @@ contains
         
         real(kind=wp), intent(in) :: program_real, expected_real
         character(len=*), intent(in) :: msg
-        integer(kind=i5), intent(in out) :: number_of_failures
+        integer(kind=i5), intent(inout) :: number_of_failures
         
         write(unit=*, fmt="(a, es15.8)") "  returned:", program_real
         write(unit=*, fmt="(a, es15.8)") "  expected:", expected_real
         write(unit=*, fmt="(a, es15.8)") "difference:", abs(program_real - expected_real)
         call logical_test(is_close_wp(program_real, expected_real), msg, number_of_failures)
-        return
     end subroutine real_equality_test
     
     subroutine real_inequality_test(program_real, expected_real, msg, number_of_failures) !
@@ -401,14 +342,12 @@ contains
         
         real(kind=wp), intent(in) :: program_real, expected_real
         character(len=*), intent(in) :: msg
-        integer(kind=i5), intent(in out) :: number_of_failures
+        integer(kind=i5), intent(inout) :: number_of_failures
         
         write(unit=*, fmt="(a, es15.8)") "  returned:", program_real
         write(unit=*, fmt="(a, es15.8)") "  expected:", expected_real
         write(unit=*, fmt="(a, es15.8)") "difference:", abs(program_real - expected_real)
         call logical_test(.not. is_close_wp(program_real, expected_real), msg, number_of_failures)
-        
-        return
     end subroutine real_inequality_test
     
     subroutine tests_end(number_of_failures) !
@@ -422,8 +361,6 @@ contains
         else
             write(unit=*, fmt=*) "All tests passed."
         end if
-        
-        return
     end subroutine tests_end
     
     ! 8. Constructors
@@ -451,7 +388,6 @@ contains
 !        end if
         
         call validate_preal(preal_out)
-        return
     end function N
     
     ! 9. Operator functions
@@ -471,7 +407,6 @@ contains
         preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
         
         call validate_preal(preal_out)
-        return
     end function padd_scalar
     
     function psubtract_scalar(preal_1, preal_2) result(preal_out) !
@@ -485,7 +420,6 @@ contains
         preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
         
         call validate_preal(preal_out)
-        return
     end function psubtract_scalar
     
     function pmultiply_scalar(preal_1, preal_2) result(preal_out) !
@@ -499,7 +433,6 @@ contains
         preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
         
         call validate_preal(preal_out)
-        return
     end function pmultiply_scalar
     
     function pdivide_scalar(preal_1, preal_2) result(preal_out) !
@@ -513,7 +446,6 @@ contains
         preal_out%stdev = max(preal_1%stdev, preal_2%stdev) ! TODO
         
         call validate_preal(preal_out)
-        return
     end function pdivide_scalar
     
     ! 9b. preal arrays
@@ -533,7 +465,6 @@ contains
         
         call operation_size_flag(preal_array_1, preal_array_2, preal_array_out)
         call validate_preal_array(preal_array_out)
-        return
     end function padd_array
     
     function psubtract_array(preal_array_1, preal_array_2) result(preal_array_out) !
@@ -550,7 +481,6 @@ contains
         
         call operation_size_flag(preal_array_1, preal_array_2, preal_array_out)
         call validate_preal_array(preal_array_out)
-        return
     end function psubtract_array
     
     function pmultiply_array(preal_array_1, preal_array_2) result(preal_array_out) !
@@ -567,7 +497,6 @@ contains
         
         call operation_size_flag(preal_array_1, preal_array_2, preal_array_out)
         call validate_preal_array(preal_array_out)
-        return
     end function pmultiply_array
     
     function pdivide_array(preal_array_1, preal_array_2) result(preal_array_out) !
@@ -584,6 +513,5 @@ contains
         
         call operation_size_flag(preal_array_1, preal_array_2, preal_array_out)
         call validate_preal_array(preal_array_out)
-        return
     end function pdivide_array
 end module daphne
