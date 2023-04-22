@@ -19,7 +19,8 @@
 # TODO: Try openf95 again? 9667537bd5391ec77c9c2228606521ea58dd4803
 
 FC          := gfortran
-FFLAGS      := -cpp -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f2003 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-logical=true -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-132
+FFLAGS      := -cpp -Wall -Wextra -Werror -pedantic-errors -std=f2003 -Wconversion -Wconversion-extra -fimplicit-none -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-logical=true -finit-derived -Wimplicit-interface -Wunused -ffree-line-length-132
+DBGFLAGS := -Og -g -fcheck=all -fbacktrace --coverage
 FPPFLAGS    := 
 OBIN        := tests
 OFLAG       := -o $(OBIN)
@@ -58,19 +59,19 @@ gfortran: ## Compile Daphne and run tests for gfortran
 # TODO: `-init=` to help detect uninitialized variables. Ideally `logical`s will be set to `.true.` so that flags are by default on, which would return an error if `check_flag` were run.
 .PHONY: ifort
 ifort: ## Compile Daphne and run tests for ifort
-	make checkone FC=ifort FFLAGS='-fpp -warn errors -check all -warn all -diag-error=remark,warn,error -O0 -g -traceback -fpe0 -fltconsistency -stand:f2003 -debug full -diag-error-limit=1'
+	make checkone FC=ifort FFLAGS='-fpp -warn errors -warn all -diag-error=remark,warn,error -fltconsistency -stand:f2003 -diag-error-limit=1' DBGFLAGS='-O0 -g -traceback -debug full -check all -fpe0'
 
 .PHONY: ifx
 ifx: ## Compile Daphne and run tests for ifx
-	make checkone FC=ifx FFLAGS='-fpp -warn errors -check all -warn all -diag-error=remark,warn,error -O0 -g -traceback -fpe0 -fltconsistency -stand:f2003 -debug full -diag-error-limit=1'
+	make checkone FC=ifx FFLAGS='-fpp -warn errors -warn all -diag-error=remark,warn,error -fltconsistency -stand:f2003 -diag-error-limit=1' DBGFLAGS='-O0 -g -traceback -debug full -check all -fpe0'
 
 .PHONY: flang-7
 flang-7: ## Compile Daphne and run tests for flang-7
-	make checkone FC=flang-7 FFLAGS='-cpp -D__DP__ -g -Wdeprecated'
+	make checkone FC=flang-7 FFLAGS='-cpp -D__DP__ -Wdeprecated' DBGFLAGS='-g'
 
 .PHONY: sunf95
 sunf95: ## Compile Daphne and run tests for sunf95
-	make checkone FC=sunf95 FFLAGS='-fpp -g -w4 -errwarn=%all -e -fnonstd -stackvar -ansi -C -fpover -xcheck=%all -U'
+	make checkone FC=sunf95 FFLAGS='-fpp -w4 -errwarn=%all -e -stackvar -ansi -C -U' DBGFLAGS='-g -fpover -xcheck=%all -fnonstd'
 
 # lfortran -c --cpp -D__DP__ daphne.F90 tests.F90
 # lfortran daphne.o tests.o
@@ -115,7 +116,7 @@ stats: ## Get some statistics for Daphne
 
 tests: $(SRC)
 	./preal_checks.py tests.F90 fail.F90
-	$(FC) $(OFLAG) $(FFLAGS) $(SRC)
+	$(FC) $(OFLAG) $(FFLAGS) $(DBGFLAGS) $(SRC)
 
 %.f90: %.F90
 	gfortran -E $(FPPFLAGS) $< | grep -v '^#' > $@
