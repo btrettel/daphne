@@ -1,13 +1,15 @@
 ! # $File$
 ! 
 ! Summary: Library for rigorous data analysis in the physical sciences with uncertainty propagation and dimensional analysis.
+! Standard: Fortran 2003
+! Preprocessor: CPP
 ! Author: Ben Trettel (<http://trettel.us/>)
 ! Last updated: $Date$
 ! Revision: $Revision$
 ! Project: [Daphne](https://github.com/btrettel/daphne)
 ! License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
 
-#include "header.F90"
+#define ASSERT(ARG1, ARG2) assert(ARG1, ARG2, __FILE__, __LINE__)
 
 module daphne
     ! Usage
@@ -158,44 +160,51 @@ contains
         character(len=*), intent(in) :: message
         character(len=*), intent(in) :: filename
         integer(kind=i5), intent(in) :: line_number
-        character(len=5)             :: line_str
+        character(len=5)             :: line_string
         
         if (.not. condition) then
-            write(unit=line_str, fmt="(i5)") line_number
-            call error_stop("("//filename//":"//trim(adjustl(line_str))//") ERROR: "//message)
+            write(unit=line_string, fmt="(i5)") line_number
+            call error_stop("("//filename//":"//trim(adjustl(line_string))//") ERROR: "//message)
         end if
     end subroutine assert
     
     subroutine assert_flag(condition, flag) !
         ! An assertion subroutine that sets flag to true if the condition is not met.
         logical, intent(in)     :: condition
-        logical, intent(inout) :: flag
+        logical, intent(in out) :: flag
         
         if (.not. condition) then
             flag = .true.
         end if
     end subroutine assert_flag
     
-    subroutine check_flag_scalar(preal_in, filename, line_number) !
+    subroutine check_flag_scalar(preal_in, var, filename, line_number) !
         ! Asserts that the flag for the preal is not set.
         ! The flag being set means that an error occurred in a previous calculation.
         type(preal), intent(in)      :: preal_in
+        character(len=*), intent(in) :: var
         character(len=*), intent(in) :: filename
         integer(kind=i5), intent(in) :: line_number
         
-        call assert(.not. preal_in%flag, "preal error detected.", filename, line_number)
+        call assert(.not. preal_in%flag, "preal error detected in "//var//".", &
+                    filename, line_number)
     end subroutine check_flag_scalar
     
-    subroutine check_flag_array(preal_array_in, filename, line_number) !
+    subroutine check_flag_array(preal_array_in, var, filename, line_number) !
         ! Asserts that the flag for the preal array is not set.
         ! The flag being set means that an error occurred in a previous calculation.
         type(preal), dimension(:), intent(in) :: preal_array_in
+        character(len=*), intent(in)          :: var
         character(len=*), intent(in)          :: filename
         integer(kind=i5), intent(in)          :: line_number
         integer(kind=i5)                      :: i
+        character(len=5)                      :: i_string
         
         do i = lbound(preal_array_in, dim=1), ubound(preal_array_in, dim=1)
-            call assert(.not. preal_array_in(i)%flag, "preal error detected.", filename, line_number)
+            write(unit=i_string, fmt="(i5)") i
+            call assert(.not. preal_array_in(i)%flag, &
+                        "preal error detected in "//var//"("//trim(adjustl(i_string))//").", &
+                        filename, line_number)
         end do
     end subroutine check_flag_array
     
@@ -217,7 +226,7 @@ contains
     subroutine validate_preal(preal_in) !
         ! Check that a preal is plausible.
         
-        type(preal), intent(inout) :: preal_in
+        type(preal), intent(in out) :: preal_in
         
         ! preal_id must be greater than zero.
 !        call assert_flag(preal_in%preal_id > 0_intk, preal_in%flag)
@@ -242,7 +251,7 @@ contains
     subroutine validate_preal_array(preal_array_in) !
         ! Check that a preal array is plausible.
         
-        type(preal), dimension(:), intent(inout) :: preal_array_in
+        type(preal), dimension(:), intent(in out) :: preal_array_in
         integer(kind=i5) :: i
         
         do i = lbound(preal_array_in, dim=1), ubound(preal_array_in, dim=1)
@@ -253,7 +262,7 @@ contains
     subroutine operation_size_flag(preal_array_1, preal_array_2, preal_array_out) !
         ! Check that preal_array_1 and preal_array_2 have the same dimensions.
         type(preal), dimension(:), intent(in) :: preal_array_1, preal_array_2
-        type(preal), dimension(:), intent(inout) :: preal_array_out
+        type(preal), dimension(:), intent(in out) :: preal_array_out
         
         call assert_flag(lbound(preal_array_1, dim=1) == lbound(preal_array_2, dim=1), &
                 preal_array_out(lbound(preal_array_1, dim=1))%flag)
@@ -314,12 +323,12 @@ contains
         
         logical, intent(in) :: condition
         character(len=*), intent(in) :: msg
-        integer(kind=i5), intent(inout) :: number_of_failures
+        integer(kind=i5), intent(in out) :: number_of_failures
         
         if (condition) then
-            write(unit=*, fmt=*) "pass: "//msg
+            write(unit=*, fmt=*) "pass: "//msg//new_line('a')
         else
-            call error_print("fail: "//msg)
+            call error_print("fail: "//msg//new_line('a'))
             number_of_failures = number_of_failures + 1
         end if
     end subroutine logical_test
@@ -329,7 +338,7 @@ contains
         
         real(kind=wp), intent(in) :: program_real, expected_real
         character(len=*), intent(in) :: msg
-        integer(kind=i5), intent(inout) :: number_of_failures
+        integer(kind=i5), intent(in out) :: number_of_failures
         
         write(unit=*, fmt="(a, es15.8)") "  returned:", program_real
         write(unit=*, fmt="(a, es15.8)") "  expected:", expected_real
@@ -338,11 +347,11 @@ contains
     end subroutine real_equality_test
     
     subroutine real_inequality_test(program_real, expected_real, msg, number_of_failures) !
-        ! Check whether two reals are close, increase number_of_failures if true.
+        ! Check whether two reals are not close, increase number_of_failures if true.
         
         real(kind=wp), intent(in) :: program_real, expected_real
         character(len=*), intent(in) :: msg
-        integer(kind=i5), intent(inout) :: number_of_failures
+        integer(kind=i5), intent(in out) :: number_of_failures
         
         write(unit=*, fmt="(a, es15.8)") "  returned:", program_real
         write(unit=*, fmt="(a, es15.8)") "  expected:", expected_real

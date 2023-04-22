@@ -1,13 +1,17 @@
 ! # $File$
 ! 
 ! Summary: Test to make sure that assert(.false.) stops the program with an error.
+! Standard: Fortran 2003
+! Preprocessor: CPP
 ! Author: Ben Trettel (<http://trettel.us/>)
 ! Last updated: $Date$
 ! Revision: $Revision$
 ! Project: [Daphne](https://github.com/btrettel/daphne)
 ! License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
 
-#include "header.F90"
+#define ASSERT(ARG1, ARG2) assert(ARG1, ARG2, __FILE__, __LINE__)
+#define CHECK_FLAG(ARG) check_flag(ARG, __FILE__, __LINE__)
+#define __WRITEFILELINE__ write(unit=*, fmt=*) __FILE__, __LINE__
 
 program fail
     ! Table of contents

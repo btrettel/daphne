@@ -1,13 +1,16 @@
 ! # $File$
 ! 
 ! Summary: Tests for all operators and procedures in Daphne.
+! Standard: Fortran 2003
+! Preprocessor: CPP
 ! Author: Ben Trettel (<http://trettel.us/>)
 ! Last updated: $Date$
 ! Revision: $Revision$
 ! Project: [Daphne](https://github.com/btrettel/daphne)
 ! License: [LGPLv3](https://www.gnu.org/licenses/lgpl-3.0.en.html)
 
-#include "header.F90"
+#define ASSERT(ARG1, ARG2) assert(ARG1, ARG2, __FILE__, __LINE__)
+#define CHECK_FLAG(ARG) check_flag(ARG, "ARG", __FILE__, __LINE__)
 
 program tests
     ! Table of contents

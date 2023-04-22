@@ -14,9 +14,12 @@
 # TODO: make commit to run lint, coverage, and check before making a commit.
 # TODO: https://github.com/MetOffice/stylist
 # TODO: Convert to fixed format with findent, run through SPAG.
+# TODO: Absoft compiler
+# TODO: LLVM Flang
+# TODO: Try openf95 again? 9667537bd5391ec77c9c2228606521ea58dd4803
 
 FC          := gfortran
-FFLAGS      := -cpp -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f2003 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-logical=true -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-132 -fimplicit-none
+FFLAGS      := -cpp -Og -g -Wall -Wextra -Werror -pedantic-errors -std=f2003 -Wconversion -Wconversion-extra -fimplicit-none -fcheck=all -fbacktrace -fmax-errors=1 -fno-unsafe-math-optimizations -ffpe-trap=invalid,zero,overflow,underflow,denormal -finit-real=nan -finit-integer=-2147483647 -finit-logical=true -finit-derived -Wimplicit-interface -Wunused --coverage -ffree-line-length-132
 FPPFLAGS    := 
 OBIN        := tests
 OFLAG       := -o $(OBIN)
@@ -44,7 +47,7 @@ check: ## Compile Daphne and run tests in many compilers
 	@echo "\033[0;32mTests on all compilers ran successfully.\033[0m"
 
 .PHONY: checkone
-checkone: tests
+checkone: $(OBIN)
 	$(ORUN)
 	@echo "\033[0;32mTests on $(FC) ran successfully.\033[0m"
 
@@ -59,7 +62,7 @@ ifort: ## Compile Daphne and run tests for ifort
 
 .PHONY: ifx
 ifx: ## Compile Daphne and run tests for ifx
-	make checkone FC=ifx FFLAGS='-fpp -warn errors -warn all -diag-error=remark,warn,error -O0 -g -traceback -fpe0 -fltconsistency -stand:f2003 -debug full -diag-error-limit=1'
+	make checkone FC=ifx FFLAGS='-fpp -warn errors -check all -warn all -diag-error=remark,warn,error -O0 -g -traceback -fpe0 -fltconsistency -stand:f2003 -debug full -diag-error-limit=1'
 
 .PHONY: flang-7
 flang-7: ## Compile Daphne and run tests for flang-7
@@ -78,8 +81,9 @@ lfortran: ## Compile Daphne and run tests for lfortran
 	lfortran daphne.o tests.o
 	make checkone
 
+# I am renaming the files .f95 as ftn95 does not distinguish between .F90 and .f90. So attempting to compile with .f90 will make ftn95 pick .F90.
 .PHONY: ftn95
-ftn95: $(SRC_FPP) ## Compile Daphne and run tests for ftn95
+ftn95: $(SRC) ## Compile Daphne and run tests for ftn95
 	#make tests FC='wine ftn95' FFLAGS='/link /checkmate /iso /restrict_syntax /implicit_none /errorlog' OBIN='tests.exe' OFLAG='' ORUN='wine tests.EXE' FPPFLAGS='-D__DP__' SRC='daphne.f90 tests.f90'
 	gfortran -E -D__DP__ -D__FTN95__ daphne.F90 | grep -v '^#' > daphne.f95
 	gfortran -E -D__DP__ -D__FTN95__ tests.F90 | grep -v '^#' > tests.f95
@@ -92,9 +96,10 @@ ftn95: $(SRC_FPP) ## Compile Daphne and run tests for ftn95
 
 .PHONY: clean
 clean: ## Remove compiled binaries and debugging files
-	rm -rfv *.cmdx *.cmod *.d *.dbg *.ERR error.log *.exe *.EXE *.f90 *.f95 fail *.FPI *.fpl *.FPT *.gcda *.gcno *.gcov html-cov/ *.ilm *.info *.lib *.map *.mod *.MOD modtable.txt *.o *.obj *.pc *.pcl *.s *.stb tests
+	rm -rfv *.cmdx *.cmod *.d *.dbg *.ERR error.log *.exe *.EXE *.f90 *.f95 fail *.FPI *.fpl *.FPT *.gcda *.gcno *.gcov html-cov/ *.ilm *.info *.lib *.map *.mod *.MOD modtable.txt *.o *.obj *.pc *.pcl *.s *.stb $(OBIN)
 
 # This needs to be run on Ben Trettel's computer as I am using a custom YAML file for CERFACS flint and wrote a wrapper script to interpret the XML output by i-Code CNES.
+# FPT spacing warnings are suppressed because ELP90 wants `in out` to have a space, but FPT doesn't like that. FPT prints a message that errors have been suppressed. That's somewhat annoying. Using `%"no warnings for spacing"` instead doesn't have that message. I prefer having cleaner output. I used that approach for a while until I ran into another problem that FPT doesn't like and I had to disable that message too.
 # 3437: FPT seems to think that (for example) `rel_tol_set = 10.0_wp*EPSILON(1.0_wp)` is a "Mixed real or complex sizes in expression - loss of precision", but it's not. `epsilon` returns the same kind as its argument. This sort of problem seems better detected by the other compilers, so I'm okay with disabling this message.
 # FPT has false positives for `use, intrinsic :: iso_fortran_env, only: error_unit` (it says "Non-standard Fortran intrinsic(s) used as local identifier(s)" and "Unused sub-programs encountered"). So I disabled those messages.
 # 2022-11-26: iCode-CNES has issues with pure procedures. So I've removed the pure keyword for the time being.
@@ -102,7 +107,7 @@ lint: $(SRC_ALL_FPP) $(SRC_ALL) ## Run linters on Daphne
 	$(foreach source_file,$(SRC_ALL_FPP),echo ; echo $(source_file):; flint lint --flintrc /home/ben/.local/share/flint/f90.yaml $(source_file);)
 	-icode-wrapper.py $(SRC_ALL_FPP)
 	rm -fv *.FPT *.FPI *.fpl
-	fpt $(SRC_ALL) %"suppress error 1271 1867 2449 3425 3437"
+	fpt $(SRC_ALL) %"suppress error 1271 1867 2185 2449 3425 3437"
 
 .PHONY: stats
 stats: ## Get some statistics for Daphne
@@ -112,7 +117,7 @@ tests: $(SRC)
 	./preal_checks.py tests.F90 fail.F90
 	$(FC) $(OFLAG) $(FFLAGS) $(SRC)
 
-%.f90: %.F90 header.F90
+%.f90: %.F90
 	gfortran -E $(FPPFLAGS) $< | grep -v '^#' > $@
 
 .PHONY: coverage
